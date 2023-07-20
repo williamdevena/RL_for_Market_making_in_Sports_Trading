@@ -8,7 +8,31 @@ def calculate_orders_rates_for_lob_simulation(num_mos,
                                               num_updates,
                                               list_volume_mos,
                                               list_volume_los):
+    """
+    Calculates the order intensity rates (lambda) and order volume rates (alpha) for market orders, limit orders,
+    and cancellation orders. These parameters are used in the simulation of a Limit Order Book (LOB) model.
 
+    The function uses logarithmic calculations for the volume rates and ratio calculations for the intensity rates.
+
+    The Markov Chain model that simulates the LOB, these parameters and their formulas follow
+    the following work: Hult, H., & Kiessling, J. (2010). Algorithmic trading with Markov chains..
+
+    Args:
+        num_mos (int): The total count of market orders.
+        num_los (dict): A dictionary containing the count of limit orders at different levels of the LOB.
+                        Keys are level indices, and values are counts of orders at that level.
+        num_cos (dict): A dictionary containing the count of cancellation orders at different levels of the LOB.
+                        Keys are level indices, and values are counts of orders at that level.
+        num_updates (int): The total number of updates in the LOB.
+        list_volume_mos (list): A list of volumes for each market order.
+        list_volume_los (list): A list of volumes for each limit order.
+
+    Returns:
+        dict: A dictionary containing the calculated parameters 'alpha_mos', 'alpha_los', 'lambda_mos', 'lamda_los',
+        and 'lamda_cos'. 'alpha_mos' and 'alpha_los' are the volume rates for market and limit orders, respectively.
+        'lambda_mos' is the intensity rate for market orders. 'lamda_los' and 'lamda_cos' are lists of intensity rates
+        for limit and cancellation orders at each level of the LOB, respectively.
+    """
     alpha_mos = np.log(np.mean(list_volume_mos)/(np.mean(list_volume_mos)-1))
     alpha_los = np.log(np.mean(list_volume_los)/(np.mean(list_volume_los)-1))
 
@@ -24,6 +48,28 @@ def calculate_orders_rates_for_lob_simulation(num_mos,
 
 
 def extract_orders_and_volumes_from_price_file(price_file_path, id_runner):
+    """
+    Process a Betfair price file to extract and count different types of orders
+    (Market orders, Limit orders, and Cancellation orders) and their volumes for
+    a specific runner in the market from both the 'lay' and 'back' sides of the
+    Limit Order Book (LOB).
+
+    The function is used in conjunction with 'calculate_orders_rates_for_lob_simulation'
+    function to calibrate the parameters lambda (order arrival rate) and alpha (order size)
+    for a Markov Chain model that simulates the LOB.
+
+    Args:
+        price_file_path (str): The file path of the Betfair price file to be processed.
+        id_runner (int): The unique identifier of the runner for which the orders and volumes will be extracted.
+
+    Returns:
+        dict: A dictionary containing counts of market orders, limit orders, and cancellation orders,
+        along with their volumes, for both 'lay' and 'back' sides. The keys of this dictionary are 'lay'
+        and 'back', and the values are another dictionary with keys 'num_mos' (count of market orders),
+        'num_los' (count of limit orders), 'num_cos' (count of cancellation orders), 'num_updates'
+        (count of updates in the LOB), 'list_volume_mos' (list of volumes of market orders),
+        and 'list_volume_los' (list of volumes of limit orders).
+    """
     market_books = betfairutil.read_prices_file(price_file_path)
     # dict_trd_prices = {}
     # dict_last_trd = {}
