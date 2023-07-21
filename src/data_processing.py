@@ -2,30 +2,64 @@ import betfairutil
 import numpy as np
 
 
-def calculate_orders_rates_for_lob_simulation(num_mos,
-                                              num_los,
-                                              num_cos,
-                                              num_updates,
-                                              list_volume_mos,
-                                              list_volume_los):
+def extract_orders_rates_for_lob_simulation(market_books, id_runner):
+    """
+    Extracts the orders and volumes from a list of market books, calculates order intensity rates (lambda) and order volume rates
+    (alpha) for the simulation of a Limit Order Book (LOB) model, for both 'back' and 'lay' sides of the market.
+
+    This function is a high-level wrapper that calls 'extract_orders_and_volumes_from_price_file' and
+    'calculate_orders_rates_for_lob_simulation' functions, to extract necessary data from the market books and then
+    compute the order intensity rates and order volume rates.
+
+    Args:
+        market_books (list): A list of market book dictionaries containing the price file data.
+        id_runner (int): Identifier for the runner (a participant in the event, e.g., a horse in a horse race).
+
+    Returns:
+        tuple: A tuple containing two dictionaries, one for 'back' and one for 'lay'. Each dictionary contains the
+        calculated parameters 'alpha_mos', 'alpha_los', 'lambda_mos', 'lamda_los', and 'lamda_cos'. 'alpha_mos' and
+        'alpha_los' are the volume rates for market and limit orders, respectively. 'lambda_mos' is the intensity rate
+        for market orders. 'lamda_los' and 'lamda_cos' are lists of intensity rates for limit and cancellation orders
+        at each level of the LOB, respectively.
+    """
+
+    dict_results = extract_orders_and_volumes_from_price_file(market_books=market_books,
+                                                            id_runner=id_runner)
+
+    publish_time_first_mb = market_books[0]['publishTime']
+    publish_time_last_mb = market_books[-1]['publishTime']
+    total_seconds = (publish_time_last_mb - publish_time_first_mb)/1000
+
+    print(total_seconds)
+
+    dict_rates_back = calculate_orders_rates_for_lob_simulation(dict_extraction_results=dict_results['back'], total_seconds=total_seconds)
+    dict_rates_lay = calculate_orders_rates_for_lob_simulation(dict_extraction_results=dict_results['lay'], total_seconds=total_seconds)
+
+    return dict_rates_back, dict_rates_lay
+
+
+
+
+def calculate_orders_rates_for_lob_simulation(dict_extraction_results, total_seconds):
     """
     Calculates the order intensity rates (lambda) and order volume rates (alpha) for market orders, limit orders,
     and cancellation orders. These parameters are used in the simulation of a Limit Order Book (LOB) model.
 
     The function uses logarithmic calculations for the volume rates and ratio calculations for the intensity rates.
 
-    The Markov Chain model that simulates the LOB, these parameters and their formulas follow
-    the following work: Hult, H., & Kiessling, J. (2010). Algorithmic trading with Markov chains..
+     The Markov Chain model that simulates the LOB, these parameters and their formulas follow
+    the following work: Hult, H., & Kiessling, J. (2010). Algorithmic trading with Markov chains.
 
     Args:
-        num_mos (int): The total count of market orders.
-        num_los (dict): A dictionary containing the count of limit orders at different levels of the LOB.
-                        Keys are level indices, and values are counts of orders at that level.
-        num_cos (dict): A dictionary containing the count of cancellation orders at different levels of the LOB.
-                        Keys are level indices, and values are counts of orders at that level.
-        num_updates (int): The total number of updates in the LOB.
-        list_volume_mos (list): A list of volumes for each market order.
-        list_volume_los (list): A list of volumes for each limit order.
+        dict_extraction_results (dict): A dictionary containing the extraction results from the price file.
+            "num_mos" (int): The total count of market orders.
+            "num_los" (dict): A dictionary containing the count of limit orders at different levels of the LOB.
+                              Keys are level indices, and values are counts of orders at that level.
+            "num_cos" (dict): A dictionary containing the count of cancellation orders at different levels of the LOB.
+                              Keys are level indices, and values are counts of orders at that level.
+            "list_volume_mos" (list): A list of volumes for each market order.
+            "list_volume_los" (list): A list of volumes for each limit order.
+        total_seconds (float): total time range in seconds
 
     Returns:
         dict: A dictionary containing the calculated parameters 'alpha_mos', 'alpha_los', 'lambda_mos', 'lamda_los',
@@ -33,12 +67,25 @@ def calculate_orders_rates_for_lob_simulation(num_mos,
         'lambda_mos' is the intensity rate for market orders. 'lamda_los' and 'lamda_cos' are lists of intensity rates
         for limit and cancellation orders at each level of the LOB, respectively.
     """
+    num_mos = dict_extraction_results["num_mos"]
+    num_los = dict_extraction_results["num_los"]
+    num_cos = dict_extraction_results["num_cos"]
+#     num_updates = dict_extraction_results["num_updates"]
+    list_volume_mos = dict_extraction_results["list_volume_mos"]
+    list_volume_los = dict_extraction_results["list_volume_los"]
+
+#     num_mos_lay = dict_results['lay']["num_mos"]
+#     num_los_lay = dict_results['lay']["num_los"]
+#     num_cos_lay = dict_results['lay']["num_cos"]
+#     num_updates_lay = dict_results['lay']["num_updates"]
+#     list_volume_mos_lay = dict_results['lay']["list_volume_mos"]
+#     list_volume_los_lay = dict_results['lay']["list_volume_los"]
     alpha_mos = np.log(np.mean(list_volume_mos)/(np.mean(list_volume_mos)-1))
     alpha_los = np.log(np.mean(list_volume_los)/(np.mean(list_volume_los)-1))
 
-    lambda_mos = num_mos/num_updates
-    lamda_los = [num_orders/num_updates for level, num_orders in num_los.items()]
-    lamda_cos = [num_orders/num_updates for level, num_orders in num_cos.items()]
+    lambda_mos = num_mos/total_seconds
+    lamda_los = [num_orders/total_seconds for level, num_orders in num_los.items()]
+    lamda_cos = [num_orders/total_seconds for level, num_orders in num_cos.items()]
 
     return {"alpha_mos": alpha_mos,
             "alpha_los": alpha_los,
@@ -47,9 +94,9 @@ def calculate_orders_rates_for_lob_simulation(num_mos,
             "lamda_cos": lamda_cos}
 
 
-def extract_orders_and_volumes_from_price_file(price_file_path, id_runner):
+def extract_orders_and_volumes_from_price_file(market_books, id_runner):
     """
-    Process a Betfair price file to extract and count different types of orders
+    Parses a list of market books to count different types of orders
     (Market orders, Limit orders, and Cancellation orders) and their volumes for
     a specific runner in the market from both the 'lay' and 'back' sides of the
     Limit Order Book (LOB).
@@ -59,20 +106,17 @@ def extract_orders_and_volumes_from_price_file(price_file_path, id_runner):
     for a Markov Chain model that simulates the LOB.
 
     Args:
-        price_file_path (str): The file path of the Betfair price file to be processed.
+        market_books (list): The file path of the Betfair price file to be processed.
         id_runner (int): The unique identifier of the runner for which the orders and volumes will be extracted.
 
     Returns:
         dict: A dictionary containing counts of market orders, limit orders, and cancellation orders,
         along with their volumes, for both 'lay' and 'back' sides. The keys of this dictionary are 'lay'
         and 'back', and the values are another dictionary with keys 'num_mos' (count of market orders),
-        'num_los' (count of limit orders), 'num_cos' (count of cancellation orders), 'num_updates'
-        (count of updates in the LOB), 'list_volume_mos' (list of volumes of market orders),
-        and 'list_volume_los' (list of volumes of limit orders).
+        'num_los' (count of limit orders), 'num_cos' (count of cancellation orders),
+        'list_volume_mos' (list of volumes of market orders), and 'list_volume_los' (list of volumes
+        of limit orders).
     """
-    market_books = betfairutil.read_prices_file(price_file_path)
-    # dict_trd_prices = {}
-    # dict_last_trd = {}
     dict_result = {}
 
     for side_tuple in [('lay','availableToBack', 'atb'), ('back','availableToLay', 'atl')]:
@@ -82,7 +126,7 @@ def extract_orders_and_volumes_from_price_file(price_file_path, id_runner):
         num_mos = {}
         num_los = {}
         num_cos = {}
-        num_updates = 0
+        #num_updates = 0
 
         list_volume_mos = []
         list_volume_los = []
@@ -95,11 +139,8 @@ def extract_orders_and_volumes_from_price_file(price_file_path, id_runner):
             lob_lay = lob[side_tuple[1]]
             traded_volume = lob['tradedVolume']
             update_list = mb['streaming_update']['rc']
-            num_updates += 1
+            #num_updates += 1
 
-            # runner_updates = [update for update in update_list
-            #                   if update['id']==id_runner]
-            # trd_updates = [update for update in runner_updates if "trd" in update]
             lay_updates = [update for update in update_list if update['id']==id_runner and side_tuple[2] in update]
 
             for lay_update in lay_updates:
@@ -144,12 +185,13 @@ def extract_orders_and_volumes_from_price_file(price_file_path, id_runner):
         dict_result[side_tuple[0]] = {"num_mos": num_mos_tot,
                                       "num_los": num_los,
                                       "num_cos": num_cos,
-                                      "num_updates": num_updates,
                                       "list_volume_mos": list_volume_mos,
                                       "list_volume_los": list_volume_los
                                      }
 
     return dict_result
+
+
 
 
 

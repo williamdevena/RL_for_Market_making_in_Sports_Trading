@@ -61,7 +61,7 @@ def get_runner_book_from_market_book(
             return return_type(**runner)
 
 
-def get_last_pre_event_market_book_id_from_prices_file(
+def get_idx_first_inplay_mb_from_prices_file(
     path_to_prices_file, filter_suspended = True):
     """
     Search a prices file for the last market book before the market turned in play
@@ -108,12 +108,3 @@ def get_event_date(price_file):
     return market_books[0]['marketDefinition']['openDate']
 
 
-
-
-
-
-if __name__=="__main__":
-    path = "/Users/william.devena/Desktop/UCL/RESEARCH_PROJECT/QST/Data/matches/nadal_deminaur.bz2"
-
-    pre_event_market_book, idx = get_last_pre_event_market_book_id_from_prices_file(path)
-    print(idx)
