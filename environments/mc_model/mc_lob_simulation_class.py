@@ -98,7 +98,10 @@ class MarkovChainLobModel:
         #rates = {"mo bid": 0.0467}
         #rates = {"mo bid": 0.0001}
         #rates["mo ask"] = rates["mo bid"]
-        rates = {"mo bid": 0.21, "mo ask": 0.13}
+
+
+        #rates = {"mo bid": 0.21, "mo ask": 0.13}
+        rates = {"mo bid": 0.21, "mo ask": 0.21}
 
 
         # lo_rates = (
