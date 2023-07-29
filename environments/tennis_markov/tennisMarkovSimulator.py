@@ -49,7 +49,7 @@ class TennisMarkovSimulator():
                 self.gw = 0
                 ## A PLAYER WINS A GAME
                 while self.gv<4 and self.gw<4:
-                    print("1")
+                    #print("1")
                     prob = match_probability.matchProb(s=self.s, t=self.t,
                                                        gv=self.gv, gw=self.gw,
                                                        sv=self.sv, sw=self.sw,
@@ -64,18 +64,18 @@ class TennisMarkovSimulator():
                         self.gv += 1
                     else:
                         self.gw += 1
-                    print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
+                    #print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
                 games_idx.append(len(prob_list)-1)
                 if self.gv==4:
                     self.sv += 1
                 else:
                     self.sw += 1
-                print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
+                #print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
             if self.sv==6:
                 self.mv += 1
             else:
                 self.mw += 1
-            print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
+            #print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
 
         return prob_list, odds_list, games_idx
 

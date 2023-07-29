@@ -28,16 +28,17 @@ def matchGeneral(e, v=0, w=0, s=3):
     ## s is total number of sets ("best of")
     towin = (s+1)/2
     left = towin - v
-    if left == 0:   return 1
+    if left == 0:
+        return 1
+
     remain = s - v - w
-    if left > remain:   return 0
+    if left > remain:
+        return 0
+
     win = 0
-    #print(left, remain)
     for i in range(int(left), (remain+1)):
-
-        #print(i, left, e)
-
-        add = ch((i-1), (int(left)-1))*(e[0]**(int(left)-1))*((1-e[0])**(i-int(left)))*e[0]
+        add = ch((i-1), (int(left)-1)) * (e[0]**(int(left)-1)) * ((1-e[0])**(i-int(left))) * e[0]
+        # print(add)
         win += add
     return win
 

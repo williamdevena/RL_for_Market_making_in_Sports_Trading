@@ -6,6 +6,7 @@ import betfairutil
 import dotenv
 import matplotlib.pyplot as plt
 
+from environments.avellaneda_stoikov import avellaneda_stoikov
 from environments.tennis_markov import tennisMarkovSimulator
 from src import data_processing
 from utils import pricefileutils
@@ -36,15 +37,29 @@ def main():
 
 
 
-    ## TENNIS MARKOV SIMULATOR
+    # ## TENNIS MARKOV SIMULATOR
+    # s = 0.5
+    # t = 0.5
+    # simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
+
+    # for x in range(100):
+    #     prob_list, odds_list, games_idx = simulator.simulate()
+    #     #plt.plot(prob_list)
+    #     plt.plot(odds_list)
+    #     simulator.restart()
+
+    # #plt.ylim(0.9, 10)
+    # plt.show()
+
+
+
+    #### AVELLANEDA-STOIKOV WITH TENNIS SIMULATOR
     s = 0.5
     t = 0.5
     simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
     prob_list, odds_list, games_idx = simulator.simulate()
 
-    #plt.plot(prob_list)
-    plt.plot(odds_list)
-    plt.show()
+    avellaneda_stoikov.run(s=odds_list)
 
 
 
