@@ -5,9 +5,10 @@
 import random
 
 import matplotlib.pyplot as plt
-from tennisGameProbability import gameProb
-from tennisSetProbability import setGeneral
-from tennisTiebreakProbability import tiebreakProb
+
+from environments.tennis_markov.tennisGameProbability import gameProb
+from environments.tennis_markov.tennisSetProbability import setGeneral
+from environments.tennis_markov.tennisTiebreakProbability import tiebreakProb
 
 
 def fact(x):
@@ -52,9 +53,9 @@ def matchProb(s, t, gv=0, gw=0, sv=0, sw=0, mv=0, mw=0, sets=3):
 
     # a = gameProb(s)
     # b = gameProb(t)
-    print(gv, gw, sv, sw, mv, mw)
+    #print(gv, gw, sv, sw, mv, mw)
     c = setGeneral(s, t)
-    print("-------------")
+    #print("-------------")
 
     if gv == 0 and gw == 0: ## no point score
         if sv == 0 and sw == 0: ## no game score

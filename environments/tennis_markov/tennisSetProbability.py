@@ -6,8 +6,8 @@
 ## some results:
 ## http://summerofjeff.wordpress.com/2010/12/02/single-set-win-expectancy-tables/
 
-from tennisGameProbability import gameProb
-from tennisTiebreakProbability import tiebreakProb
+from environments.tennis_markov.tennisGameProbability import gameProb
+from environments.tennis_markov.tennisTiebreakProbability import tiebreakProb
 
 
 def fact(x):
@@ -174,7 +174,7 @@ def setGeneral(s, u, v=0, w=0, tb=1):
             outcomes['57'] = f*(1-deuceprob)
 
     win = 0
-    print(outcomes)
+    #print(outcomes)
     for o in outcomes:
         #print(o)
         if o in ['60', '61', '62', '63', '64', '75', '76']:
