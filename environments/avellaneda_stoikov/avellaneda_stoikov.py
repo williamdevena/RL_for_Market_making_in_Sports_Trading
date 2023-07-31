@@ -17,174 +17,131 @@ Parameter fitting: https://quant.stackexchange.com/questions/36073/how-does-one-
 #       Simulations
 #########################################
 
-def run(s):
-
-    n_sim = 100
-
-    pnl_sim = numpy.empty((n_sim))
-
-    for i_sim in range(n_sim):
-
-        ##########################################
-        #       Stock price
-        #########################################
+        # Risk factor (->0: high risk, ->1: low risk)
+        #gamma = 0.05
+        # Market model
+        #k = 20.0
 
         # The Wiener process parameter.
-        sigma = 2
+        #sigma = 2
+
+        ## DEFINING QUOTES (CORE OF STRATEGIES)
+                ## AVELLANEDA-STOIKOV
+                # # Reserve price (for AS optimal quotes)
+                # r[n] = price[n] - q[n] * gamma * sigma**2*(T-dt*n)
+                # # Reserve spread
+                # r_spread = 2 / gamma * math.log(1+gamma/k)
+                # ra[n] = r[n] + r_spread/2
+                # rb[n] = r[n] - r_spread/2
+
+                # # ## FIXED OFFSET
+                # # offset = 0.01
+                # # ra[n] = s[n] + offset
+                # # rb[n] = s[n] - offset
+
+                # # ## RANDOM STRATEGY
+                # # random_offset = random.random()
+                # # ra[n] = s[n] + random_offset
+                # # rb[n] = s[n] - random_offset
+
+
+
+                # Option B: Unlimit time horizon
+            # else:
+            #     # Upper bound of inventory position
+            #     w = 0.5 * gamma**2 * sigma**2 * (q_max+1)**2
+            #     # Optimal quotes
+            #     coef = gamma**2*sigma**2/(2*w-gamma**2*q[n]**2*sigma**2)
+
+            #     ra[n] = price[n] + math.log(1+(1-2*q[n])*coef)/gamma
+            #     rb[n] = price[n] + math.log(1+(-1-2*q[n])*coef)/gamma
+            #     # Reserve price
+            #     r[n] = (ra[n] + rb[n])/2
+
+
+
+
+
+def run_simulation(price,
+                   strategy,
+                   num_simulations=100,
+                   sigma=2,
+                   gamma=0.05,
+                   k=20.0):
+    """
+    Run simulations of a market-making strategy over a given price time series. The simulation results
+    are plotted and some statistical information about the performance of the strategy is printed.
+
+    Args:
+        price (array_like): A time series of the asset's price.
+        strategy (Object): An instance of a Strategy class which defines the quotes method.
+        num_simulations (int, optional): The number of simulations to run. Defaults to 100.
+        sigma (float, optional): Parameter for the Avellaneda-Stoikov (AS) model. Defaults to 2.
+        gamma (float, optional): Risk aversion parameter for the AS model. Defaults to 0.05.
+        k (float, optional): Market depth parameter. Parameter for the consumption rate (the bigger k
+            the least probable it is to get orders filled). Defaults to 20.0.
+
+    Returns:
+        None: This function doesn't return anything but generates graphs of the simulation results.
+    """
+    pnl_sim = numpy.empty((num_simulations))
+
+    for i_sim in range(num_simulations):
         # Total time.
         T = 1.0
-
-
-        N = len(s)
+        N = len(price)
         dt = T/N
         t = numpy.linspace(0.0, N*dt, N)
 
-
-        # plt.plot(t, s)
-        # plt.xlabel('time', fontsize=16)
-        # plt.ylabel('price', fontsize=16)
-        # plt.grid(True)
-        # plt.show()
-
-        ##########################################
-        #       Computational loop
-        #########################################
-
-        # Limit horizon
-        limit_horizon = True
-
         # Wealth
-        #pnl = numpy.empty((N+2))
         pnl = numpy.empty((N+1))
         pnl[0] = 0
-
         # Cash
         x = numpy.empty((N+2))
         x[0] = 0
-
         # Inventory
-        # q = numpy.empty((N+2))
         q = numpy.empty((N+1))
         q[0] = 0
-        q_max = 10
-
-        # Risk factor (->0: high risk, ->1: low risk)
-        gamma = 0.001
-
-        # Market model
-        k = 10.0
-
         # Reserve price
-        #r = numpy.empty((N+1))
         r = numpy.empty((N))
-
         # Optimal quotes
-        # ra = numpy.empty((N+1))
-        # rb = numpy.empty((N+1))
         ra = numpy.empty((N))
         rb = numpy.empty((N))
 
-        # Order consumtion probability factors
-        M = s[0]/200
+        # Order consumption probability factors
+        M = price[0]/200
         A = 1./dt/math.exp(k*M/2)
 
         max_q_held = 0
         min_q_held = 0
 
-        #for n in range(N+1):
+        ### SIMULATION
         for n in range(N):
-
-            # # Stock trend
-            # #s[n] = s[n] - 0.1 * n
-            # s[n] = s[n]
-            # #s[n] = s[n] + 0.1 * n
-
-
-
-
-            # ###############
-            # # Option A: Limit time horizon
-            if limit_horizon:
-
-                # Reserve price
-                r[n] = s[n] - q[n] * gamma * sigma**2*(T-dt*n)
-
-                # Reserve spread
-                r_spread = 2 / gamma * math.log(1+gamma/k)
-
-                # optimal quotes
-
-                ## AVELLANEDA-STOIKOV
-                ra[n] = r[n] + r_spread/2
-                rb[n] = r[n] - r_spread/2
-
-                # ## FIXED OFFSET
-                # offset = 0.01
-                # ra[n] = s[n] + offset
-                # rb[n] = s[n] - offset
-
-                # ## RANDOM STRATEGY
-                # random_offset = random.random()
-                # ra[n] = s[n] + random_offset
-                # rb[n] = s[n] - random_offset
-
-
-
-
-
-
-                #print(r[n], r_spread, ra[n], rb[n])
-                #print(r_spread)
-
-            ###############
-            # Option B: Unlimit time horizon
-            else:
-
-                # Upper bound of inventory position
-                w = 0.5 * gamma**2 * sigma**2 * (q_max+1)**2
-
-                # Optimal quotes
-                coef = gamma**2*sigma**2/(2*w-gamma**2*q[n]**2*sigma**2)
-
-                ra[n] = s[n] + math.log(1+(1-2*q[n])*coef)/gamma
-                rb[n] = s[n] + math.log(1+(-1-2*q[n])*coef)/gamma
-
-                # Reserve price
-                r[n] = (ra[n] + rb[n])/2
+            ### Core of simulation (where the strategy decides the quotes)
+            ra[n], rb[n] = strategy.quotes()
 
             # Reserve deltas
-            delta_a = ra[n] - s[n]
-            delta_b = s[n] - rb[n]
+            delta_a = ra[n] - price[n]
+            delta_b = price[n] - rb[n]
 
             # Intensities
             lambda_a = A * math.exp(-k*delta_a)
             lambda_b = A * math.exp(-k*delta_b)
-            #print(lambda_a, lambda_b)
 
             # Order consumption (can be both per time step)
             ya = random.random()
             yb = random.random()
 
-            dNa = 0
-            dNb = 0
-
+            ### Orders get filled or not?
             prob_ask = 1 - math.exp(-lambda_a*dt) # 1-exp(-lt) or just lt?
             prob_bid = 1 - math.exp(-lambda_b*dt)
-            # print(prob_ask, prob_bid)
-            # print("-------")
+            dNa = 1 if ya < prob_ask else 0
+            dNb = 1 if yb < prob_bid else 0
 
-            # print(ya, yb)
-            # print(prob_ask, prob_bid)
-            # print("----------")
-
-            if ya < prob_ask:
-                dNa = 1
-            if yb < prob_bid:
-                dNb = 1
-
+            ## Update cash and inventory
             q[n+1] = q[n] - dNa + dNb
             x[n+1] = x[n] + ra[n]*dNa - rb[n]*dNb
-            pnl[n+1] = x[n+1] + q[n+1]*s[n]
+            pnl[n+1] = x[n+1] + q[n+1]*price[n]
 
             if q[n+1] > max_q_held:
                 max_q_held = q[n+1]
@@ -193,12 +150,9 @@ def run(s):
 
         pnl_sim[i_sim] = pnl[-1]
 
-    #print(pnl_sim)
-
     print("Last simulation results:\n")
-
     print("Final inventory hold: ", q[-1])
-    print("Last price: ", s[-1])
+    print("Last price: ", price[-1])
     print("Cash: ", x[-1])
     print("Final wealth: ", pnl[n+1])
     print("Max q held: ", max_q_held)
@@ -206,7 +160,7 @@ def run(s):
 
     f = plt.figure(figsize=(15, 4))
     f.add_subplot(1, 3, 1)
-    plt.plot(t, s, color='black', label='Mid-market price')
+    plt.plot(t, price, color='black', label='Mid-market price')
     plt.plot(t, r, color='blue',
             #linestyle='dashed',
             label='Reservation price')
@@ -242,12 +196,12 @@ def run(s):
 
     print("gamma: %.3f"%gamma)
     print("k: %.3f"%k)
-    print("sigma: %.3f"%sigma)
+    #print("sigma: %.3f"%sigma)
     print("T: %.2f"%T)
     print("n steps: %d"%N)
-    print("Using limited horizon:", limit_horizon)
+   # print("Using limited horizon:", limit_horizon)
 
-    print("\nResults over: %d simulations\n"%n_sim)
+    print("\nResults over: %d simulations\n"%num_simulations)
 
     print("Average PnL: %.2f"% numpy.mean(pnl_sim))
     print("Standard deviation PnL: %.2f"% numpy.std(pnl_sim))

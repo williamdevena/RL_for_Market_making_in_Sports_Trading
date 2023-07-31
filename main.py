@@ -59,7 +59,7 @@ def main():
     simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
     prob_list, odds_list, games_idx = simulator.simulate()
 
-    avellaneda_stoikov.run(s=odds_list)
+    avellaneda_stoikov.run_simulation(price=odds_list, strategy=xxx)
 
 
 
