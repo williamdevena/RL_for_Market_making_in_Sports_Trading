@@ -60,7 +60,8 @@ class TennisMarkovSimulator():
                     # if prob>1:
                     #     print(prob)
                     rand_num = random.random()
-                    if rand_num<=0.5:
+                    #print(prob)
+                    if rand_num<=prob:
                         self.gv += 1
                     else:
                         self.gw += 1
