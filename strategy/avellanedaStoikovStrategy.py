@@ -17,7 +17,7 @@ class AvellanedaStoikovStrategy(MarketMakingStrategy):
                                            strategy.
     """
 
-    def __init__(self, gamma, sigma):
+    def __init__(self, gamma=0.05, sigma=2):
         super().__init__()
         self.gamma = gamma
         self.sigma = sigma
@@ -41,4 +41,9 @@ class AvellanedaStoikovStrategy(MarketMakingStrategy):
         ra = reservation_price + r_spread/2
         rb = reservation_price - r_spread/2
 
-        return ra, rb
+        if rb<=1.0:
+            rb = 1.01
+        if ra<=1.0:
+            ra = 1.01
+
+        return reservation_price, ra, rb

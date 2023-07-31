@@ -6,9 +6,11 @@ import betfairutil
 import dotenv
 import matplotlib.pyplot as plt
 
-from environments.avellaneda_stoikov import avellaneda_stoikov
+from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
+    AvellanedaStoikovFramework
 from environments.tennis_markov import tennisMarkovSimulator
 from src import data_processing
+from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 from strategy.fixedOffsetStrategy import FixedOffsetStrategy
 from strategy.randomStrategy import RandomStrategy
 from utils import pricefileutils
@@ -60,14 +62,14 @@ def main():
     #### AVELLANEDA-STOIKOV WITH TENNIS SIMULATOR
     s = 0.7
     t = 0.3
-    simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
-    prob_list, odds_list, games_idx = simulator.simulate()
+    price_simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
+    simulator_framework = AvellanedaStoikovFramework()
 
-    random_strategy = RandomStrategy(range_offset=(0, 2))
-    fixed_strategy = FixedOffsetStrategy(offset=0.05)
+    #strategy = RandomStrategy(range_offset=(0, 2))
+    #strategy = FixedOffsetStrategy(offset=0.2)
+    strategy = AvellanedaStoikovStrategy()
 
-    #avellaneda_stoikov.run_simulation(price=odds_list, strategy=fixed_strategy)
-    avellaneda_stoikov.run_simulation(price=odds_list, strategy=random_strategy)
+    simulator_framework.run_simulation(price_simulator=price_simulator, strategy=strategy, num_simulations=100)
 
 
 

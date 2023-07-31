@@ -41,6 +41,11 @@ class RandomStrategy(MarketMakingStrategy):
         ra = price + random_offset
         rb = price - random_offset
 
+        if rb<=1.0:
+            rb = 1.01
+        if ra<=1.0:
+            ra = 1.01
+
         return ra, rb
 
 
