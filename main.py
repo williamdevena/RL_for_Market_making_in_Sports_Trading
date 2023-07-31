@@ -39,35 +39,35 @@ def main():
 
 
 
-    ## TENNIS MARKOV SIMULATOR
+    # ## TENNIS MARKOV SIMULATOR
+    # s = 0.7
+    # t = 0.3
+    # simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
+
+    # for x in range(1000):
+    #     prob_list, odds_list, games_idx = simulator.simulate()
+
+    #     plt.plot(prob_list)
+    #     # plt.plot(odds_list)
+
+    #     simulator.restart()
+
+    # plt.ylim(-0.1, 1.1)
+    # plt.show()
+
+
+
+    #### AVELLANEDA-STOIKOV WITH TENNIS SIMULATOR
     s = 0.7
     t = 0.3
     simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
+    prob_list, odds_list, games_idx = simulator.simulate()
 
-    for x in range(1000):
-        prob_list, odds_list, games_idx = simulator.simulate()
+    random_strategy = RandomStrategy(range_offset=(0, 2))
+    fixed_strategy = FixedOffsetStrategy(offset=0.05)
 
-        plt.plot(prob_list)
-        # plt.plot(odds_list)
-
-        simulator.restart()
-
-    plt.ylim(-0.1, 1.1)
-    plt.show()
-
-
-
-    # #### AVELLANEDA-STOIKOV WITH TENNIS SIMULATOR
-    # s = 0.5
-    # t = 0.5
-    # simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
-    # prob_list, odds_list, games_idx = simulator.simulate()
-
-    # random_strategy = RandomStrategy()
-    # fixed_strategy = FixedOffsetStrategy(offset=0.05)
-
-    # avellaneda_stoikov.run_simulation(price=odds_list, strategy=fixed_strategy)
-    # #avellaneda_stoikov.run_simulation(price=odds_list, strategy=random_strategy)
+    #avellaneda_stoikov.run_simulation(price=odds_list, strategy=fixed_strategy)
+    avellaneda_stoikov.run_simulation(price=odds_list, strategy=random_strategy)
 
 
 
