@@ -17,6 +17,27 @@ Parameter fitting: https://quant.stackexchange.com/questions/36073/how-does-one-
 
 
 class AvellanedaStoikovFramework():
+    """
+    This class is used for running simulations of market-making strategies using the Avellaneda-Stoikov (AS)
+    framework (Avellaneda M, Stoikov S. High-frequency trading in a limit order book. Quantitative Finance. 2008).
+    It provides a method for running simulations over a price time series and plotting the results.
+
+    Note: here we use a variation of the AS framework where the price is not modelled as a brownian motion, but
+    the price simulator, which could be a brownian motion or a Markov model 8in case of tennis, is passed as a
+    parameter. Hence we can see this class as a generalization of the AS framework.
+
+    Attributes:
+        k (float): A parameter of the Avellaneda-Stoikov framework that refers to the arrival of orders and the
+                   prob. of getting the limit orders filled (the bigger k the least probable it is to get the
+                   orders filled). The default value is 20.0.
+        T (float): The total time until the market closes in the Avellaneda-Stoikov model.
+                   The default value is 1.0.
+                   Note: The total time T is divided in timesteps of dT=T/N where N=len(price time series)
+
+    Methods:
+        run_simulation(price_simulator, strategy, num_simulations=100): Executes the simulations and
+                                                                         plots the results.
+    """
 
     def __init__(self, k=20.0, T=1.0):
         self.k = k
