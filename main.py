@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from environments.avellaneda_stoikov import avellaneda_stoikov
 from environments.tennis_markov import tennisMarkovSimulator
 from src import data_processing
+from strategy.fixedOffsetStrategy import FixedOffsetStrategy
+from strategy.randomStrategy import RandomStrategy
 from utils import pricefileutils
 
 
@@ -59,7 +61,11 @@ def main():
     simulator = tennisMarkovSimulator.TennisMarkovSimulator(s=s, t=t)
     prob_list, odds_list, games_idx = simulator.simulate()
 
-    avellaneda_stoikov.run_simulation(price=odds_list, strategy=xxx)
+    random_strategy = RandomStrategy()
+    fixed_strategy = FixedOffsetStrategy(offset=0.05)
+
+    avellaneda_stoikov.run_simulation(price=odds_list, strategy=fixed_strategy)
+    #avellaneda_stoikov.run_simulation(price=odds_list, strategy=random_strategy)
 
 
 

@@ -118,7 +118,7 @@ def run_simulation(price,
         ### SIMULATION
         for n in range(N):
             ### Core of simulation (where the strategy decides the quotes)
-            ra[n], rb[n] = strategy.quotes()
+            ra[n], rb[n] = strategy.quotes(price=price[n])
 
             # Reserve deltas
             delta_a = ra[n] - price[n]
