@@ -1,21 +1,21 @@
-## calculate the probability of server winning a single game, 
+## calculate the probability of server winning a single game,
 ## given p(winning single point) and current point score
- 
+
 ## some results and commentary here:
 ## http://summerofjeff.wordpress.com/2010/12/03/single-game-win-expectancy-tables/
- 
+
 def fact(x):
     if x in [0, 1]:  return 1
     r = 1
     for a in range(1, (x+1)):  r = r*a
     return r
- 
+
 def ch(a, b):
     return fact(a)/(fact(b)*fact(a-b))
- 
+
 def gameOutcome(s, a, b):
     return ch((a+b), a)*(s**a)*((1-s)**b)*s
- 
+
 def gameProb(s, v=0, w=0):
     ## function calculates the probability of server winning
     ## a single game, given p(winning any given point) [s],
@@ -27,20 +27,28 @@ def gameProb(s, v=0, w=0):
         return 1
     elif w >= 4 and (w-v) >= 2:
         return 0
-    else:   pass
+    else:
+        pass
     ## if deuce or ad score e.g. 5-4, reduce to e.g. 3-2
     while True:
         if (v+w) > 6:
             v -= 1
             w -= 1
-        else:   break
+        else:
+            break
     ## specific probabilities:
-    if w == 0:  w0 = gameOutcome(s, 3-v, 0)
-    else:   w0 = 0
-    if w <= 1:  w15 = gameOutcome(s, 3-v, 1-w)
-    else:   w15 = 0
-    if w <= 2:  w30 = gameOutcome(s, 3-v, 2-w)
-    else:   w30 = 0
+    if w == 0:
+        w0 = gameOutcome(s, 3-v, 0)
+    else:
+        w0 = 0
+    if w <= 1:
+        w15 = gameOutcome(s, 3-v, 1-w)
+    else:
+        w15 = 0
+    if w <= 2:
+        w30 = gameOutcome(s, 3-v, 2-w)
+    else:
+        w30 = 0
     if v == 4:
         wAd, lAd = s, 0
         d = 1-s

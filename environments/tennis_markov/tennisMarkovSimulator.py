@@ -49,29 +49,57 @@ class TennisMarkovSimulator():
                 self.gw = 0
                 ## A PLAYER WINS A GAME
                 while self.gv<4 and self.gw<4:
-                    #print("1")
-                    prob = match_probability.matchProb(s=self.s, t=self.t,
-                                                       gv=self.gv, gw=self.gw,
-                                                       sv=self.sv, sw=self.sw,
-                                                       mv=self.mv, mw=self.mw)
-                    prob_list.append(prob)
-                    odds_list.append(1/prob)
-                    ## for test (prob should never be >1)
-                    # if prob>1:
-                    #     print(prob)
-                    rand_num = random.random()
-                    #print(prob)
-                    if rand_num<=prob:
-                        self.gv += 1
+                    ## DEUCE
+                    if self.gv==3 and self.gw==3:
+                        # print("DEUCE")
+                        # print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
+
+                        while self.gv<(self.gw+2) and self.gw<(self.gv+2):
+
+                            prob = match_probability.matchProb(s=self.s, t=self.t,
+                                                        gv=self.gv, gw=self.gw,
+                                                        sv=self.sv, sw=self.sw,
+                                                        mv=self.mv, mw=self.mw)
+                            prob_list.append(prob)
+                            odds_list.append(1/prob)
+                            ## for test (prob should never be >1)
+                            # if prob>1:
+                            #     print(prob)
+                            rand_num = random.random()
+                            if rand_num<=prob:
+                                self.gv += 1
+                            else:
+                                self.gw += 1
+                        #     print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
+                        # print("-----------")
                     else:
-                        self.gw += 1
-                    #print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
+                        prob = match_probability.matchProb(s=self.s, t=self.t,
+                                                        gv=self.gv, gw=self.gw,
+                                                        sv=self.sv, sw=self.sw,
+                                                        mv=self.mv, mw=self.mw)
+                        prob_list.append(prob)
+                        odds_list.append(1/prob)
+                        ## for test (prob should never be >1)
+                        # if prob>1:
+                        #     print(prob)
+                        rand_num = random.random()
+                        if rand_num<=prob:
+                            self.gv += 1
+                        else:
+                            self.gw += 1
+
+                #print(self.gv, self.gw)
+                ## DEUCE
+
+
+
                 games_idx.append(len(prob_list)-1)
-                if self.gv==4:
+
+
+                if self.gv>self.gw:
                     self.sv += 1
                 else:
                     self.sw += 1
-                #print(self.gv, self.gw, self.sv, self.sw, self.mv, self.mw)
             if self.sv==6:
                 self.mv += 1
             else:
