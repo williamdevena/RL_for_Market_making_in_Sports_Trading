@@ -9,13 +9,22 @@ The repository is organized into several directories:
 
 - `environments`: This directory contains two subdirectories, `avellaneda_stoikov` and `tennis_markov`, which contain Python modules for different models or environments used in the project.
 
-    - `avellaneda_stoikov`: Contains modules to simulate the Avellaneda-Stoikov (AS) framework, used to simulate a traidng environment and test strategies.
+    - `avellaneda_stoikov`: Contains modules to simulate the Avellaneda-Stoikov (AS) framework, used to simulate a trading environment and test strategies.
 
     - `tennis_markov`: Contains modules to calculate the probabilities in tennis matches, sets, games, and tiebreaks, using a Markov chain model. These modules are used to simulate the price time series of a tennis bet. The price time series that it simulates is used in conjunction with AS framework to simulate a trading environment in sport betting market.
 
 - `src`: This directory contains a module for data processing, which involves cleaning, transforming, or otherwise preparing data for use in the project.
 
 - `utils`: This directory contains a module for handling Betfair price files, used as datasets in this project.
+
+## Installation
+Use the following commands to clone the repository and install the necessary requirements:
+<pre>
+git clone https://github.com/williamdevena/RL_for_Market_making_in_Sports_Trading.git
+cd RL_for_Market_making_in_Sports_Trading
+pip install -r requirements.txt
+</pre>
+
 
 ## Usage
 
