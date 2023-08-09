@@ -1,9 +1,12 @@
 import math
+import os
 import random
 
+import dataframe_image as dfi
 #import brownian as bm
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
+import pandas as pd
 
 from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 
@@ -43,10 +46,12 @@ class AvellanedaStoikovFramework():
         self.k = k
         self.T = T
 
-    def run_simulation(self,
+    def run_single_simulation(self,
                        price_simulator,
                        strategy,
-                       num_simulations=100):
+                       num_simulations=100,
+                       plotting=False,
+                       plot_path=None):
         """
         Run simulations of a market-making strategy over a given price time series. The simulation results
         are plotted and some statistical information about the performance of the strategy is printed.
@@ -63,34 +68,47 @@ class AvellanedaStoikovFramework():
         Returns:
         None: This function doesn't return anything but generates graphs of the simulation results.
         """
-        pnl_sim = numpy.empty((num_simulations))
+        if plot_path and not os.path.exists(plot_path):
+            os.makedirs(plot_path)
+
+        final_pnl = np.zeros((num_simulations))
+        volatility_pnl = np.zeros((num_simulations))
+        min_pnl = np.zeros((num_simulations))
+        max_pnl = np.zeros((num_simulations))
+
+        list_prices = []
 
         for i_sim in range(num_simulations):
             _, price = price_simulator.simulate()
             #price_simulator.restart()
+            list_prices.append(price)
 
             N = len(price)
-            dt = self.T/N
-            t = numpy.linspace(0.0, N*dt, N)
+            #dt = self.T/N
+            dt = 0.01
+            t = np.linspace(0.0, N*dt, N)
 
             # Wealth
-            pnl = numpy.empty((N+1))
+            pnl = np.zeros((N+1))
             pnl[0] = 0
             # Cash
-            x = numpy.empty((N+2))
+            x = np.zeros((N+2))
             x[0] = 0
             # Inventory
-            q = numpy.empty((N+1))
+            q = np.zeros((N+1))
             q[0] = 0
             # Reserve price
-            r = numpy.empty((N))
+            r = np.zeros((N))
+            #print(r)
             # Optimal quotes
-            ra = numpy.empty((N))
-            rb = numpy.empty((N))
+            ra = np.zeros((N))
+            rb = np.zeros((N))
 
             # Order consumption probability factors
-            M = price[0]/200
+            #M = price[0]/2
+            M = 0.5
             A = 1./dt/math.exp(self.k*M/2)
+            #print(M, dt, A)
 
             max_q_held = 0
             min_q_held = 0
@@ -99,6 +117,7 @@ class AvellanedaStoikovFramework():
             for n in range(N):
                 ### Core of simulation (where the strategy decides the quotes)
                 if isinstance(strategy, AvellanedaStoikovStrategy):
+                    #print("AS model")
                     r[n], ra[n], rb[n] = strategy.quotes(price=price[n],
                                                          remaining_time=self.T-(dt*n),
                                                          k=self.k)
@@ -133,53 +152,128 @@ class AvellanedaStoikovFramework():
                 if q[n+1] < min_q_held:
                     min_q_held = q[n+1]
 
-            pnl_sim[i_sim] = pnl[-1]
+            final_pnl[i_sim] = pnl[-1]
+            volatility_pnl[i_sim] = np.std(pnl)
+            min_pnl[i_sim] = np.min(pnl)
+            max_pnl[i_sim] = np.max(pnl)
 
-        f = plt.figure(figsize=(15, 4))
-        f.add_subplot(1, 3, 1)
-        plt.plot(t, price, color='black', label='Mid-market price')
-        plt.plot(t, r, color='blue',
-        #linestyle='dashed',
-        label='Reservation price')
-        plt.plot(t, ra, color='red',
-        #linestyle='', marker='.',
-        label='Price asked', markersize='4')
-        plt.plot(t, rb, color='lime',
-        #linestyle='', marker='o',
-        label='Price bid', markersize='2')
-        plt.xlabel('Time', fontsize=16)
-        plt.ylabel('Price [USD]', fontsize=16)
-        plt.grid(True)
-        plt.legend()
-        #plt.show()
 
-        f.add_subplot(1,3, 2)
-        plt.plot(t, pnl[:-1], color='black', label='P&L')
-        plt.xlabel('Time', fontsize=16)
-        plt.ylabel('PnL [USD]', fontsize=16)
-        plt.grid(True)
-        plt.legend()
+        df_final_pnl = pd.DataFrame(final_pnl, columns=['Final PnL'])
+        df_volatility = pd.DataFrame(volatility_pnl, columns=['Volatility'])
+        df_min_pnl = pd.DataFrame(min_pnl, columns=['Min PnL'])
+        df_max_pnl = pd.DataFrame(max_pnl, columns=['Max PnL'])
 
-        f.add_subplot(1,3, 3)
-        plt.plot(t, q[:-1], color='black', label='Stocks held')
-        plt.xlabel('Time', fontsize=16)
-        plt.ylabel('Inventory', fontsize=16)
-        plt.grid(True)
-        plt.legend()
+        if plotting:
+            print("\nResults over: %d simulations\n"%num_simulations)
+            print("Final PnL")
+            print(df_final_pnl.describe())
+            print("Volatility")
+            print(df_volatility.describe())
+            print("Min PnL (Max Loss)")
+            print(df_min_pnl.describe())
+            print("Max PnL")
+            print(df_max_pnl.describe())
 
-        plt.show()
+            f = plt.figure(figsize=(15, 4))
+            f.add_subplot(1, 3, 1)
+            plt.plot(t, price, color='black', label='Mid-market price')
+            plt.plot(t, r, color='blue',
+            #linestyle='dashed',
+            label='Reservation price')
+            plt.plot(t, ra, color='red',
+            #linestyle='', marker='.',
+            label='Price asked', markersize='4')
+            plt.plot(t, rb, color='lime',
+            #linestyle='', marker='o',
+            label='Price bid', markersize='2')
+            plt.xlabel('Time', fontsize=16)
+            plt.ylabel('Price [USD]', fontsize=16)
+            plt.grid(True)
+            plt.legend()
+            #plt.show()
 
-        print("\nResults over: %d simulations\n"%num_simulations)
-        print("Average PnL: %.2f"% numpy.mean(pnl_sim))
-        print("Standard deviation PnL: %.2f"% numpy.std(pnl_sim))
+            f.add_subplot(1,3, 2)
+            plt.plot(t, pnl[:-1], color='black', label='P&L')
+            plt.xlabel('Time', fontsize=16)
+            plt.ylabel('PnL [USD]', fontsize=16)
+            plt.grid(True)
+            plt.legend()
 
-        range_min = int(min(pnl_sim) - abs(min(pnl_sim)))
-        range_max = int(max(pnl_sim) + abs(min(pnl_sim)))
-        plt.hist(pnl_sim,
-        bins=30,
-        #  range=(range_min, range_max)
-        )
-        plt.xlabel('PnL', fontsize=16)
-        plt.ylabel('Frequency', fontsize=16)
-        plt.show()
+            f.add_subplot(1,3, 3)
+            plt.plot(t, q[:-1], color='black', label='Stocks held')
+            plt.xlabel('Time', fontsize=16)
+            plt.ylabel('Inventory', fontsize=16)
+            plt.grid(True)
+            plt.legend()
+
+            plt.savefig(os.path.join(plot_path, "last_simulation"))
+            #plt.show()
+            plt.close()
+
+            for price in list_prices:
+                plt.plot(price)
+            plt.ylim(0.9, 100)
+            plt.xlabel("Timesteps")
+            plt.ylabel("Price (Odds)")
+            plt.savefig(os.path.join(plot_path, "prices"))
+            #plt.show()
+            plt.close()
+
+            # range_min = int(min(pnl_sim) - abs(min(pnl_sim)))
+            # range_max = int(max(pnl_sim) + abs(min(pnl_sim)))
+
+            plt.hist(final_pnl,
+            bins=50,
+            #  range=(range_min, range_max)
+            )
+            plt.xlabel('PnL', fontsize=16)
+            plt.ylabel('Frequency', fontsize=16)
+            plt.savefig(os.path.join(plot_path, "final_pnl"))
+            plt.close()
+            dfi.export(df_final_pnl.describe(), os.path.join(plot_path, 'df_final_pnl.png'))
+
+            plt.hist(volatility_pnl,
+            bins=50,
+            #  range=(range_min, range_max)
+            )
+            plt.xlabel('Volatility', fontsize=16)
+            plt.ylabel('Frequency', fontsize=16)
+            plt.savefig(os.path.join(plot_path, "volatility"))
+            plt.close()
+            dfi.export(df_volatility.describe(), os.path.join(plot_path, 'df_volatility.png'))
+
+            plt.hist(min_pnl,
+            bins=50,
+            #  range=(range_min, range_max)
+            )
+            plt.xlabel('Min PnL (Max Loss)', fontsize=16)
+            plt.ylabel('Frequency', fontsize=16)
+            plt.savefig(os.path.join(plot_path, "min_pnl"))
+            plt.close()
+            dfi.export(df_min_pnl.describe(), os.path.join(plot_path, 'df_min_pnl.png'))
+
+            plt.hist(max_pnl,
+            bins=50,
+            #  range=(range_min, range_max)
+            )
+            plt.xlabel('Max PnL', fontsize=16)
+            plt.ylabel('Frequency', fontsize=16)
+            plt.savefig(os.path.join(plot_path, "max_pnl"))
+            plt.close()
+            dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
+
+            final_df_describe = pd.concat(objs=[df_final_pnl.describe(),
+                                                df_volatility.describe(),
+                                                df_min_pnl.describe(),
+                                                df_max_pnl.describe()],
+                                          axis='columns')
+
+            dfi.export(final_df_describe, os.path.join(plot_path, 'all_describes.png'))
+            print(final_df_describe.to_latex())
+
+
+        return {'final_pnl':final_pnl,
+                'volatility': volatility_pnl,
+                'min_pnl': min_pnl,
+                'max_pnl': max_pnl}
 
