@@ -172,18 +172,19 @@ def main():
 
 
 
-    ### TESTING STRATEGIES
-    plot_path = "./plots/fixed"
+    # ### TESTING STRATEGIES
+    # plot_path = "./plots/fixed_05"
 
-    #random_strategy = RandomStrategy(range_offset=(0, 1))
-    fixed_strategy = FixedOffsetStrategy(offset=0.2)
-    #as_strategy = AvellanedaStoikovStrategy()
+    # #random_strategy = RandomStrategy(range_offset=(0, 1))
+    # #fixed_strategy_02 = FixedOffsetStrategy(offset=0.2)
+    # fixed_strategy_05 = FixedOffsetStrategy(offset=0.5)
+    # #as_strategy = AvellanedaStoikovStrategy()
 
-    testing.test_strategies(plot_path=plot_path,
-                            strategy=fixed_strategy)
+    # testing.test_strategies(plot_path=plot_path,
+    #                         strategy=fixed_strategy_05)
 
-    # plot_path = "./plots/fixed"
-    # testing.test_fixed_offset_strategy(plot_path=plot_path)
+    # # plot_path = "./plots/fixed"
+    # # testing.test_fixed_offset_strategy(plot_path=plot_path)
 
 
 
@@ -285,6 +286,69 @@ def main():
     # plt.savefig("./plots/as/max_pnl_adjusted")
     # #plt.show()
     # plt.close()
+
+
+
+
+
+    ### cashout calculator test
+    framework = AvellanedaStoikovFramework()
+    current_odds = 2.0
+
+    # dict_bets = {
+    #     'back': [
+    #        # {'stake': 10, 'odds': 2.5},
+    #        # {'stake': 5, 'odds': 3.0},
+    #     ],
+    #     'lay': [
+    #         {'stake': 10, 'odds': 3.0},
+    #         {'stake': 15, 'odds': 2.5},
+    #         {'stake': 15, 'odds': 2.0},
+    #         {'stake': 15, 'odds': 2.5},
+    #     ]
+    # }
+
+
+    list_bets = [
+        {'stake': 10, 'odds': 2.5},
+        # {'stake': 5, 'odds': 3.0},
+        # {'stake': 10, 'odds': 3.0},
+        {'stake': -5, 'odds': 2.0},
+        # {'stake': -15, 'odds': 2.0},
+        # {'stake': -15, 'odds': 2.5},
+    ]
+
+
+
+    # cashouts_back = [framework.calculate_cash_out(type="back",
+    #                                             stake=bet['stake'],
+    #                                             odds=bet['odds'],
+    #                                             current_odds=current_odds)
+    #                 for bet in dict_bets['back']]
+
+    # cashout_lay = [framework.calculate_cash_out(type="lay",
+    #                                             stake=bet['stake'],
+    #                                             odds=bet['odds'],
+    #                                             current_odds=current_odds)
+    #                 for bet in dict_bets['lay']]
+
+    # cashouts = cashouts_back + cashout_lay
+    # #print(cashouts)
+    # print(f"Total cashout: {sum(cashouts)}")
+
+
+    combined_bet = framework.combine_bets(list_bets=list_bets)
+    print(combined_bet)
+    cashout = framework.calculate_cash_out(stake=combined_bet['stake'],
+                                           odds=combined_bet['odds'],
+                                           current_odds=current_odds)
+    print(f"Combined cashout: {cashout}")
+
+
+    # if round(cashout, 3) == round(sum(cashouts), 3):
+    #     print("TRUE")
+    # else:
+    #     print("FALSE")
 
 
 

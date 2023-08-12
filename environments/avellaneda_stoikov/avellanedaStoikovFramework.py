@@ -46,6 +46,53 @@ class AvellanedaStoikovFramework():
         self.k = k
         self.T = T
 
+    def calculate_cash_out(self, stake, odds, current_odds):
+        current_stake = ((odds+1)*stake)/(current_odds+1)
+        #if type=="back":
+        cash_out = (stake*odds) - (current_stake*current_odds)
+        # elif type=="lay":
+        #     cash_out = (stake) - (current_stake)
+        #     #cash_out = (current_stake*current_odds) - (stake*odds) ### this has to be same as the above definition of cash_out
+
+        return cash_out
+
+
+
+    def combine_bets(self, list_bets):
+
+        stake = sum([bet['stake'] for bet in list_bets])
+
+        # for back_bet in dict_bets['back']:
+        #     stake += back_bet['stake']
+
+        # for lay_bet in dict_bets['lay']:
+        #     stake -= lay_bet['stake']
+
+        if stake==0:
+            print("Total stake can't be 0")
+            return False
+
+        odds = sum([(bet['odds'] * (bet['stake']/stake)) for bet in list_bets])
+
+
+        # odds = 0
+
+        # for back_bet in dict_bets['back']:
+        #     odds += back_bet['odds'] * (back_bet['stake']/stake)
+        #     #print(odds)
+
+        # for lay_bet in dict_bets['lay']:
+        #     odds += lay_bet['odds'] * (-lay_bet['stake']/stake)
+        #     #print(odds)
+
+        return {'stake': stake,
+                'odds': odds}
+
+
+
+
+
+
     def run_single_simulation(self,
                        price_simulator,
                        strategy,
@@ -97,12 +144,15 @@ class AvellanedaStoikovFramework():
             # Inventory
             q = np.zeros((N+1))
             q[0] = 0
-            # Reserve price
-            r = np.zeros((N))
-            #print(r)
-            # Optimal quotes
-            ra = np.zeros((N))
+
+            # # Reserve price
+            # r = np.zeros((N))
+            # #print(r)
+            # # Optimal quotes
+            # ra = np.zeros((N))
+            # rb = np.zeros((N))
             rb = np.zeros((N))
+            rl = np.zeros((N))
 
             # Order consumption probability factors
             #M = price[0]/2
@@ -115,37 +165,43 @@ class AvellanedaStoikovFramework():
 
             ### SIMULATION
             for n in range(N):
-                ### Core of simulation (where the strategy decides the quotes)
-                if isinstance(strategy, AvellanedaStoikovStrategy):
-                    #print("AS model")
-                    r[n], ra[n], rb[n] = strategy.quotes(price=price[n],
-                                                         remaining_time=self.T-(dt*n),
-                                                         k=self.k)
-                else:
-                    ra[n], rb[n] = strategy.quotes(price=price[n])
+                # ### Core of simulation (where the strategy decides the quotes)
+                # if isinstance(strategy, AvellanedaStoikovStrategy):
+                #     #print("AS model")
+                #     r[n], ra[n], rb[n] = strategy.quotes(price=price[n],
+                #                                          remaining_time=self.T-(dt*n),
+                #                                          k=self.k)
+                # else:
+                rb[n], rl[n] = strategy.quotes(price=price[n])
 
                 # Reserve deltas
-                delta_a = ra[n] - price[n]
-                delta_b = price[n] - rb[n]
+                delta_b = rb[n] - price[n]
+                delta_l = price[n] - rl[n]
 
                 # Intensities
-                lambda_a = A * math.exp(-self.k*delta_a)
                 lambda_b = A * math.exp(-self.k*delta_b)
+                lambda_l = A * math.exp(-self.k*delta_l)
 
                 # Order consumption (can be both per time step)
-                ya = random.random()
                 yb = random.random()
+                yl = random.random()
 
                 ### Orders get filled or not?
-                prob_ask = 1 - math.exp(-lambda_a*dt) # 1-exp(-lt) or just lt?
-                prob_bid = 1 - math.exp(-lambda_b*dt)
-                dNa = 1 if ya < prob_ask else 0
-                dNb = 1 if yb < prob_bid else 0
+                # prob_ask = 1 - math.exp(-lambda_a*dt) # 1-exp(-lt) or just lt?
+                # prob_bid = 1 - math.exp(-lambda_b*dt)
+                prob_back = 1 - math.exp(-lambda_b*dt) # 1-exp(-lt) or just lt?
+                prob_lay = 1 - math.exp(-lambda_l*dt)
 
-                ## Update cash and inventory
-                q[n+1] = q[n] - dNa + dNb
-                x[n+1] = x[n] + ra[n]*dNa - rb[n]*dNb
-                pnl[n+1] = x[n+1] + q[n+1]*price[n]
+                dNb = 1 if yb < prob_back else 0
+                dNl = 1 if yl < prob_lay else 0
+
+                # ## Update cash and inventory
+                # q[n+1] = q[n] - dNa + dNb
+                # x[n+1] = x[n] + ra[n]*dNa - rb[n]*dNb
+                # pnl[n+1] = x[n+1] + q[n+1]*price[n]
+                q[n+1] = q[n] - dNl + dNb
+                x[n+1] = x[n] - dNb + dNl
+                pnl[n+1] = x[n+1] + self.calculate_cash_out(q[n+1], price[n])
 
                 if q[n+1] > max_q_held:
                     max_q_held = q[n+1]
@@ -277,3 +333,18 @@ class AvellanedaStoikovFramework():
                 'min_pnl': min_pnl,
                 'max_pnl': max_pnl}
 
+
+
+# if __name__=="__main__":
+#     framework = AvellanedaStoikovFramework()
+
+#     type_bet = "back"
+#     stake = 10
+#     odds = 2.5
+#     current_odds = 3.5
+
+#     cashout = framework.calculate_cash_out(type=type_bet,
+#                                            stake=stake,
+#                                            odds=odds,
+#                                            current_odds=current_odds)
+#     print(cashout)
