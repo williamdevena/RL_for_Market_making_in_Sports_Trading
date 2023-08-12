@@ -127,29 +127,34 @@ def main():
 
 
 
-    # ### AS SIMULATION USING TENNISIM
-    # a_s = 0.65
-    # b_s = 0.65
+    ### AS SIMULATION USING TENNISIM
+    a_s = 0.65
+    b_s = 0.65
+    k = 7
 
-    # price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=a_s, b_s=b_s)
+    price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=a_s, b_s=b_s)
 
-    # simulator_framework = AvellanedaStoikovFramework(k=7)
+    simulator_framework = AvellanedaStoikovFramework(k=k)
 
-    # strategy = RandomStrategy(range_offset=(0, 1))
-    # #strategy = FixedOffsetStrategy(offset=0.1)
-    # #strategy = AvellanedaStoikovStrategy()
+    #strategy = RandomStrategy(range_offset=(0, 1))
+    #plot_path = "./plots/random"
 
-    # num_simulations = 100
-    # start_time = time.time()
+    strategy = FixedOffsetStrategy(offset=0.2)
+    plot_path = "./plots/fixed_02"
 
-    # plot_path = "./plots/random"
+    #strategy = AvellanedaStoikovStrategy()
 
-    # simulator_framework.run_simulation(price_simulator=price_simulator,
-    #                                    strategy=strategy,
-    #                                    num_simulations=num_simulations,
-    #                                    plotting=True,
-    #                                    plot_path=plot_path)
-    # print("--- %s seconds ---" % (time.time() - start_time))
+    num_simulations = 1000
+    start_time = time.time()
+
+
+
+    simulator_framework.run_single_simulation(price_simulator=price_simulator,
+                                       strategy=strategy,
+                                       num_simulations=num_simulations,
+                                       plotting=True,
+                                       plot_path=plot_path)
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
     # ## TEST FIXED STRATEGY
@@ -291,32 +296,33 @@ def main():
 
 
 
-    ### cashout calculator test
-    framework = AvellanedaStoikovFramework()
-    current_odds = 2.0
+    # ### cashout calculator test
+    # framework = AvellanedaStoikovFramework()
+    # current_odds = 2.0
 
-    # dict_bets = {
-    #     'back': [
-    #        # {'stake': 10, 'odds': 2.5},
-    #        # {'stake': 5, 'odds': 3.0},
-    #     ],
-    #     'lay': [
-    #         {'stake': 10, 'odds': 3.0},
-    #         {'stake': 15, 'odds': 2.5},
-    #         {'stake': 15, 'odds': 2.0},
-    #         {'stake': 15, 'odds': 2.5},
-    #     ]
-    # }
+    # # dict_bets = {
+    # #     'back': [
+    # #        # {'stake': 10, 'odds': 2.5},
+    # #        # {'stake': 5, 'odds': 3.0},
+    # #     ],
+    # #     'lay': [
+    # #         {'stake': 10, 'odds': 3.0},
+    # #         {'stake': 15, 'odds': 2.5},
+    # #         {'stake': 15, 'odds': 2.0},
+    # #         {'stake': 15, 'odds': 2.5},
+    # #     ]
+    # # }
 
 
-    list_bets = [
-        {'stake': 10, 'odds': 2.5},
-        # {'stake': 5, 'odds': 3.0},
-        # {'stake': 10, 'odds': 3.0},
-        {'stake': -5, 'odds': 2.0},
-        # {'stake': -15, 'odds': 2.0},
-        # {'stake': -15, 'odds': 2.5},
-    ]
+    # list_bets = [
+    #     {'stake': 0, 'odds': 0},
+    #     #{'stake': 10, 'odds': 2.5},
+    #     # {'stake': 5, 'odds': 3.0},
+    #     # {'stake': 10, 'odds': 3.0},
+    #     #{'stake': -5, 'odds': 2.0},
+    #     # {'stake': -15, 'odds': 2.0},
+    #     # {'stake': -15, 'odds': 2.5},
+    # ]
 
 
 
@@ -337,12 +343,12 @@ def main():
     # print(f"Total cashout: {sum(cashouts)}")
 
 
-    combined_bet = framework.combine_bets(list_bets=list_bets)
-    print(combined_bet)
-    cashout = framework.calculate_cash_out(stake=combined_bet['stake'],
-                                           odds=combined_bet['odds'],
-                                           current_odds=current_odds)
-    print(f"Combined cashout: {cashout}")
+    # combined_bet = framework.combine_bets(list_bets=list_bets)
+    # print(combined_bet)
+    # cashout = framework.calculate_cash_out(stake=combined_bet['stake'],
+    #                                        odds=combined_bet['odds'],
+    #                                        current_odds=current_odds)
+    # print(f"Combined cashout: {cashout}")
 
 
     # if round(cashout, 3) == round(sum(cashouts), 3):

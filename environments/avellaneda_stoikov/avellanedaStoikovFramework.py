@@ -7,6 +7,7 @@ import dataframe_image as dfi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from alive_progress import alive_it
 
 from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 
@@ -46,44 +47,22 @@ class AvellanedaStoikovFramework():
         self.k = k
         self.T = T
 
+
     def calculate_cash_out(self, stake, odds, current_odds):
         current_stake = ((odds+1)*stake)/(current_odds+1)
-        #if type=="back":
         cash_out = (stake*odds) - (current_stake*current_odds)
-        # elif type=="lay":
-        #     cash_out = (stake) - (current_stake)
-        #     #cash_out = (current_stake*current_odds) - (stake*odds) ### this has to be same as the above definition of cash_out
-
+        #print(cash_out)
         return cash_out
 
 
-
     def combine_bets(self, list_bets):
-
         stake = sum([bet['stake'] for bet in list_bets])
-
-        # for back_bet in dict_bets['back']:
-        #     stake += back_bet['stake']
-
-        # for lay_bet in dict_bets['lay']:
-        #     stake -= lay_bet['stake']
 
         if stake==0:
             print("Total stake can't be 0")
             return False
 
         odds = sum([(bet['odds'] * (bet['stake']/stake)) for bet in list_bets])
-
-
-        # odds = 0
-
-        # for back_bet in dict_bets['back']:
-        #     odds += back_bet['odds'] * (back_bet['stake']/stake)
-        #     #print(odds)
-
-        # for lay_bet in dict_bets['lay']:
-        #     odds += lay_bet['odds'] * (-lay_bet['stake']/stake)
-        #     #print(odds)
 
         return {'stake': stake,
                 'odds': odds}
@@ -125,7 +104,13 @@ class AvellanedaStoikovFramework():
 
         list_prices = []
 
-        for i_sim in range(num_simulations):
+        for i_sim in alive_it(range(num_simulations)):
+            # print("-----------------")
+            # print("-----------------")
+            # print("-----------------")
+            # print("-----------------")
+            # print("-----------------")
+            # print("-----------------")
             _, price = price_simulator.simulate()
             #price_simulator.restart()
             list_prices.append(price)
@@ -142,8 +127,11 @@ class AvellanedaStoikovFramework():
             x = np.zeros((N+2))
             x[0] = 0
             # Inventory
-            q = np.zeros((N+1))
-            q[0] = 0
+            #q = np.zeros((N+1))
+            q = [0]*(N+1)
+
+            #q[0] = 0
+            q[0] = {'stake': 0, 'odds': 0}
 
             # # Reserve price
             # r = np.zeros((N))
@@ -164,6 +152,7 @@ class AvellanedaStoikovFramework():
             min_q_held = 0
 
             ### SIMULATION
+            #flag_first_trade = True
             for n in range(N):
                 # ### Core of simulation (where the strategy decides the quotes)
                 # if isinstance(strategy, AvellanedaStoikovStrategy):
@@ -174,24 +163,22 @@ class AvellanedaStoikovFramework():
                 # else:
                 rb[n], rl[n] = strategy.quotes(price=price[n])
 
+
+
                 # Reserve deltas
                 delta_b = rb[n] - price[n]
                 delta_l = price[n] - rl[n]
-
                 # Intensities
                 lambda_b = A * math.exp(-self.k*delta_b)
                 lambda_l = A * math.exp(-self.k*delta_l)
-
                 # Order consumption (can be both per time step)
                 yb = random.random()
                 yl = random.random()
-
                 ### Orders get filled or not?
                 # prob_ask = 1 - math.exp(-lambda_a*dt) # 1-exp(-lt) or just lt?
                 # prob_bid = 1 - math.exp(-lambda_b*dt)
                 prob_back = 1 - math.exp(-lambda_b*dt) # 1-exp(-lt) or just lt?
                 prob_lay = 1 - math.exp(-lambda_l*dt)
-
                 dNb = 1 if yb < prob_back else 0
                 dNl = 1 if yl < prob_lay else 0
 
@@ -199,14 +186,64 @@ class AvellanedaStoikovFramework():
                 # q[n+1] = q[n] - dNa + dNb
                 # x[n+1] = x[n] + ra[n]*dNa - rb[n]*dNb
                 # pnl[n+1] = x[n+1] + q[n+1]*price[n]
-                q[n+1] = q[n] - dNl + dNb
-                x[n+1] = x[n] - dNb + dNl
-                pnl[n+1] = x[n+1] + self.calculate_cash_out(q[n+1], price[n])
+                # q[n+1] = q[n] - dNl + dNb
+                # x[n+1] = x[n] - dNb + dNl
+                # pnl[n+1] = x[n+1] + self.calculate_cash_out(q[n+1], price[n])
 
-                if q[n+1] > max_q_held:
-                    max_q_held = q[n+1]
-                if q[n+1] < min_q_held:
-                    min_q_held = q[n+1]
+                #print(q[n], dNb, dNl)
+
+
+                if q[n]=={'stake': 0, 'odds': 0}:
+                    if (dNb - dNl)==0:
+                        q[n+1] = q[n]
+                    else:
+                        q[n+1] = self.combine_bets(list_bets=[q[n],
+                                                             {'stake': dNb, 'odds': rb[n]},
+                                                             {'stake': -dNl, 'odds': rl[n]}]
+                                                  )
+                else:
+                    if (q[n]['stake'] + dNb - dNl)==0:
+                        dNb = 0
+                        dNl = 0
+                    q[n+1] = self.combine_bets(list_bets=[q[n],
+                                                         {'stake': dNb, 'odds': rb[n]},
+                                                         {'stake': -dNl, 'odds': rl[n]}]
+                                              )
+
+
+
+                # if flag_first_trade:
+                #     if (q[n]['stake'] + dNb - dNl)==0:
+                #         q[n+1] = {'stake': 0, 'odds': 0}
+                #     else:
+                #         q[n+1] = self.combine_bets(list_bets=[q[n],
+                #                                             {'stake': dNb, 'odds': rb[n]},
+                #                                             {'stake': -dNl, 'odds': rl[n]}]
+                #                                 )
+                #         ## becomes False when first trade is filled (used to update the inventory
+                #         # at the first trade when stake and odds are equal to 0)
+                #         #if dNb!=0 or dNl!=0:
+                #         flag_first_trade = False
+                # else:
+                #     if (q[n]['stake'] + dNb - dNl)==0:
+                #         #print("STAKE IS ZEROOOOOO")
+                #         dNb = 0
+                #         dNl = 0
+                #     q[n+1] = self.combine_bets(list_bets=[q[n],
+                #                                         {'stake': dNb, 'odds': rb[n]},
+                #                                         {'stake': -dNl, 'odds': rl[n]}]
+                #                             )
+                #print(f"Q: {q[n+1]}")
+                x[n+1] = x[n] - dNb + dNl
+                pnl[n+1] = self.calculate_cash_out(stake=q[n+1]['stake'],
+                                                   odds=q[n+1]['odds'],
+                                                   current_odds=price[n])
+
+
+                # if q[n+1] > max_q_held:
+                #     max_q_held = q[n+1]
+                # if q[n+1] < min_q_held:
+                #     min_q_held = q[n+1]
 
             final_pnl[i_sim] = pnl[-1]
             volatility_pnl[i_sim] = np.std(pnl)
@@ -230,16 +267,16 @@ class AvellanedaStoikovFramework():
             print("Max PnL")
             print(df_max_pnl.describe())
 
-            f = plt.figure(figsize=(15, 4))
-            f.add_subplot(1, 3, 1)
+            f = plt.figure(figsize=(15, 15))
+            f.add_subplot(2, 2, 1)
             plt.plot(t, price, color='black', label='Mid-market price')
-            plt.plot(t, r, color='blue',
-            #linestyle='dashed',
-            label='Reservation price')
-            plt.plot(t, ra, color='red',
+            # plt.plot(t, r, color='blue',
+            # #linestyle='dashed',
+            # label='Reservation price')
+            plt.plot(t, rb, color='red',
             #linestyle='', marker='.',
             label='Price asked', markersize='4')
-            plt.plot(t, rb, color='lime',
+            plt.plot(t, rl, color='lime',
             #linestyle='', marker='o',
             label='Price bid', markersize='2')
             plt.xlabel('Time', fontsize=16)
@@ -248,15 +285,26 @@ class AvellanedaStoikovFramework():
             plt.legend()
             #plt.show()
 
-            f.add_subplot(1,3, 2)
+            f.add_subplot(2, 2, 2)
             plt.plot(t, pnl[:-1], color='black', label='P&L')
             plt.xlabel('Time', fontsize=16)
             plt.ylabel('PnL [USD]', fontsize=16)
             plt.grid(True)
             plt.legend()
 
-            f.add_subplot(1,3, 3)
-            plt.plot(t, q[:-1], color='black', label='Stocks held')
+            stake = [bet['stake'] for bet in q]
+            f.add_subplot(2, 2, 3)
+            #plt.plot(t, q[:-1]['stake'], color='black', label='Stake held')
+            plt.plot(t, stake[:-1], color='black', label='Total stake')
+            plt.xlabel('Time', fontsize=16)
+            plt.ylabel('Inventory', fontsize=16)
+            plt.grid(True)
+            plt.legend()
+
+            odds = [bet['odds'] for bet in q]
+            f.add_subplot(2, 2, 4)
+            #plt.plot(t, q[:-1]['stake'], color='black', label='Stake held')
+            plt.plot(t, odds[:-1], color='black', label='Total odds')
             plt.xlabel('Time', fontsize=16)
             plt.ylabel('Inventory', fontsize=16)
             plt.grid(True)
