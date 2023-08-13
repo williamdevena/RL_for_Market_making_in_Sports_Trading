@@ -101,16 +101,13 @@ class AvellanedaStoikovFramework():
         volatility_pnl = np.zeros((num_simulations))
         min_pnl = np.zeros((num_simulations))
         max_pnl = np.zeros((num_simulations))
+        #returns = np.zeros((num_simulations))
+        sharpe_ratio = np.zeros((num_simulations))
+        sortino_ratio = np.zeros((num_simulations))
 
         list_prices = []
 
-        for i_sim in alive_it(range(num_simulations)):
-            # print("-----------------")
-            # print("-----------------")
-            # print("-----------------")
-            # print("-----------------")
-            # print("-----------------")
-            # print("-----------------")
+        for i_sim in range(num_simulations):
             _, price = price_simulator.simulate()
             #price_simulator.restart()
             list_prices.append(price)
@@ -133,12 +130,7 @@ class AvellanedaStoikovFramework():
             #q[0] = 0
             q[0] = {'stake': 0, 'odds': 0}
 
-            # # Reserve price
-            # r = np.zeros((N))
-            # #print(r)
             # # Optimal quotes
-            # ra = np.zeros((N))
-            # rb = np.zeros((N))
             rb = np.zeros((N))
             rl = np.zeros((N))
 
@@ -148,22 +140,13 @@ class AvellanedaStoikovFramework():
             A = 1./dt/math.exp(self.k*M/2)
             #print(M, dt, A)
 
-            max_q_held = 0
-            min_q_held = 0
+            # max_q_held = 0
+            # min_q_held = 0
 
             ### SIMULATION
-            #flag_first_trade = True
             for n in range(N):
-                # ### Core of simulation (where the strategy decides the quotes)
-                # if isinstance(strategy, AvellanedaStoikovStrategy):
-                #     #print("AS model")
-                #     r[n], ra[n], rb[n] = strategy.quotes(price=price[n],
-                #                                          remaining_time=self.T-(dt*n),
-                #                                          k=self.k)
-                # else:
+                ## Decide back and lay price
                 rb[n], rl[n] = strategy.quotes(price=price[n])
-
-
 
                 # Reserve deltas
                 delta_b = rb[n] - price[n]
@@ -175,22 +158,10 @@ class AvellanedaStoikovFramework():
                 yb = random.random()
                 yl = random.random()
                 ### Orders get filled or not?
-                # prob_ask = 1 - math.exp(-lambda_a*dt) # 1-exp(-lt) or just lt?
-                # prob_bid = 1 - math.exp(-lambda_b*dt)
                 prob_back = 1 - math.exp(-lambda_b*dt) # 1-exp(-lt) or just lt?
                 prob_lay = 1 - math.exp(-lambda_l*dt)
                 dNb = 1 if yb < prob_back else 0
                 dNl = 1 if yl < prob_lay else 0
-
-                # ## Update cash and inventory
-                # q[n+1] = q[n] - dNa + dNb
-                # x[n+1] = x[n] + ra[n]*dNa - rb[n]*dNb
-                # pnl[n+1] = x[n+1] + q[n+1]*price[n]
-                # q[n+1] = q[n] - dNl + dNb
-                # x[n+1] = x[n] - dNb + dNl
-                # pnl[n+1] = x[n+1] + self.calculate_cash_out(q[n+1], price[n])
-
-                #print(q[n], dNb, dNl)
 
 
                 if q[n]=={'stake': 0, 'odds': 0}:
@@ -199,46 +170,19 @@ class AvellanedaStoikovFramework():
                     else:
                         q[n+1] = self.combine_bets(list_bets=[q[n],
                                                              {'stake': dNb, 'odds': rb[n]},
-                                                             {'stake': -dNl, 'odds': rl[n]}]
-                                                  )
+                                                             {'stake': -dNl, 'odds': rl[n]}])
                 else:
                     if (q[n]['stake'] + dNb - dNl)==0:
                         dNb = 0
                         dNl = 0
                     q[n+1] = self.combine_bets(list_bets=[q[n],
                                                          {'stake': dNb, 'odds': rb[n]},
-                                                         {'stake': -dNl, 'odds': rl[n]}]
-                                              )
+                                                         {'stake': -dNl, 'odds': rl[n]}])
 
-
-
-                # if flag_first_trade:
-                #     if (q[n]['stake'] + dNb - dNl)==0:
-                #         q[n+1] = {'stake': 0, 'odds': 0}
-                #     else:
-                #         q[n+1] = self.combine_bets(list_bets=[q[n],
-                #                                             {'stake': dNb, 'odds': rb[n]},
-                #                                             {'stake': -dNl, 'odds': rl[n]}]
-                #                                 )
-                #         ## becomes False when first trade is filled (used to update the inventory
-                #         # at the first trade when stake and odds are equal to 0)
-                #         #if dNb!=0 or dNl!=0:
-                #         flag_first_trade = False
-                # else:
-                #     if (q[n]['stake'] + dNb - dNl)==0:
-                #         #print("STAKE IS ZEROOOOOO")
-                #         dNb = 0
-                #         dNl = 0
-                #     q[n+1] = self.combine_bets(list_bets=[q[n],
-                #                                         {'stake': dNb, 'odds': rb[n]},
-                #                                         {'stake': -dNl, 'odds': rl[n]}]
-                #                             )
-                #print(f"Q: {q[n+1]}")
                 x[n+1] = x[n] - dNb + dNl
                 pnl[n+1] = self.calculate_cash_out(stake=q[n+1]['stake'],
                                                    odds=q[n+1]['odds'],
                                                    current_odds=price[n])
-
 
                 # if q[n+1] > max_q_held:
                 #     max_q_held = q[n+1]
@@ -249,12 +193,18 @@ class AvellanedaStoikovFramework():
             volatility_pnl[i_sim] = np.std(pnl)
             min_pnl[i_sim] = np.min(pnl)
             max_pnl[i_sim] = np.max(pnl)
+            returns = np.diff(pnl, prepend=0)
+            downside_std = np.nanstd(np.clip(returns, np.NINF, 0, out=None))
+            sharpe_ratio[i_sim] = np.mean(returns)/np.std(returns)
+            sortino_ratio[i_sim] = np.mean(returns)/downside_std
 
 
         df_final_pnl = pd.DataFrame(final_pnl, columns=['Final PnL'])
         df_volatility = pd.DataFrame(volatility_pnl, columns=['Volatility'])
         df_min_pnl = pd.DataFrame(min_pnl, columns=['Min PnL'])
         df_max_pnl = pd.DataFrame(max_pnl, columns=['Max PnL'])
+        df_sharpe = pd.DataFrame(sharpe_ratio, columns=['Sharpe Ratio'])
+        df_sortino = pd.DataFrame(sortino_ratio, columns=['Sortino Ratio'])
 
         if plotting:
             print("\nResults over: %d simulations\n"%num_simulations)
@@ -266,21 +216,25 @@ class AvellanedaStoikovFramework():
             print(df_min_pnl.describe())
             print("Max PnL")
             print(df_max_pnl.describe())
+            print("Sharpe ratio")
+            print(df_sharpe.describe())
+            print("Sortino Ratio")
+            print(df_sortino.describe())
 
             f = plt.figure(figsize=(15, 15))
             f.add_subplot(2, 2, 1)
-            plt.plot(t, price, color='black', label='Mid-market price')
+            plt.plot(t, price, color='black', label='Mid price')
             # plt.plot(t, r, color='blue',
             # #linestyle='dashed',
             # label='Reservation price')
             plt.plot(t, rb, color='red',
             #linestyle='', marker='.',
-            label='Price asked', markersize='4')
+            label='Back price', markersize='4')
             plt.plot(t, rl, color='lime',
             #linestyle='', marker='o',
-            label='Price bid', markersize='2')
+            label='Lay price', markersize='2')
             plt.xlabel('Time', fontsize=16)
-            plt.ylabel('Price [USD]', fontsize=16)
+            plt.ylabel('Price', fontsize=16)
             plt.grid(True)
             plt.legend()
             #plt.show()
@@ -334,7 +288,7 @@ class AvellanedaStoikovFramework():
             plt.ylabel('Frequency', fontsize=16)
             plt.savefig(os.path.join(plot_path, "final_pnl"))
             plt.close()
-            dfi.export(df_final_pnl.describe(), os.path.join(plot_path, 'df_final_pnl.png'))
+            #dfi.export(df_final_pnl.describe(), os.path.join(plot_path, 'df_final_pnl.png'))
 
             plt.hist(volatility_pnl,
             bins=50,
@@ -344,7 +298,7 @@ class AvellanedaStoikovFramework():
             plt.ylabel('Frequency', fontsize=16)
             plt.savefig(os.path.join(plot_path, "volatility"))
             plt.close()
-            dfi.export(df_volatility.describe(), os.path.join(plot_path, 'df_volatility.png'))
+            #dfi.export(df_volatility.describe(), os.path.join(plot_path, 'df_volatility.png'))
 
             plt.hist(min_pnl,
             bins=50,
@@ -354,7 +308,7 @@ class AvellanedaStoikovFramework():
             plt.ylabel('Frequency', fontsize=16)
             plt.savefig(os.path.join(plot_path, "min_pnl"))
             plt.close()
-            dfi.export(df_min_pnl.describe(), os.path.join(plot_path, 'df_min_pnl.png'))
+            #dfi.export(df_min_pnl.describe(), os.path.join(plot_path, 'df_min_pnl.png'))
 
             plt.hist(max_pnl,
             bins=50,
@@ -364,12 +318,36 @@ class AvellanedaStoikovFramework():
             plt.ylabel('Frequency', fontsize=16)
             plt.savefig(os.path.join(plot_path, "max_pnl"))
             plt.close()
-            dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
+            #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
+
+            plt.hist(sharpe_ratio,
+            bins=50,
+            #  range=(range_min, range_max)
+            )
+            plt.xlabel('Sharpe Ratio', fontsize=16)
+            plt.ylabel('Frequency', fontsize=16)
+            plt.savefig(os.path.join(plot_path, "sharpe_ratio"))
+            plt.close()
+            #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
+
+            plt.hist(sortino_ratio,
+            bins=50,
+            #  range=(range_min, range_max)
+            )
+            plt.xlabel('Sortino ratio', fontsize=16)
+            plt.ylabel('Frequency', fontsize=16)
+            plt.savefig(os.path.join(plot_path, "sortino_ratio"))
+            plt.close()
+            #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
+
+
 
             final_df_describe = pd.concat(objs=[df_final_pnl.describe(),
                                                 df_volatility.describe(),
                                                 df_min_pnl.describe(),
-                                                df_max_pnl.describe()],
+                                                df_max_pnl.describe(),
+                                                df_sharpe.describe(),
+                                                df_sortino.describe()],
                                           axis='columns')
 
             dfi.export(final_df_describe, os.path.join(plot_path, 'all_describes.png'))
@@ -379,7 +357,9 @@ class AvellanedaStoikovFramework():
         return {'final_pnl':final_pnl,
                 'volatility': volatility_pnl,
                 'min_pnl': min_pnl,
-                'max_pnl': max_pnl}
+                'max_pnl': max_pnl,
+                'sharpe_ratio': sharpe_ratio,
+                'sortino_ratio': sortino_ratio,}
 
 
 

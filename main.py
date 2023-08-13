@@ -9,6 +9,7 @@ import betfairutil
 import dotenv
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import tennisim
 
 from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
@@ -130,7 +131,7 @@ def main():
     ### AS SIMULATION USING TENNISIM
     a_s = 0.65
     b_s = 0.65
-    k = 7
+    k = 2
 
     price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=a_s, b_s=b_s)
 
@@ -140,13 +141,13 @@ def main():
     #plot_path = "./plots/random"
 
     strategy = FixedOffsetStrategy(offset=0.2)
-    plot_path = "./plots/fixed_02"
+    plot_path = "./plots_single_simulations/fixed_02"
 
-    #strategy = AvellanedaStoikovStrategy()
+    # strategy = AvellanedaStoikovStrategy()
+    # plot_path = "./plots_single_simulations/as"
 
-    num_simulations = 1000
+    num_simulations = 100
     start_time = time.time()
-
 
 
     simulator_framework.run_single_simulation(price_simulator=price_simulator,
@@ -155,6 +156,12 @@ def main():
                                        plotting=True,
                                        plot_path=plot_path)
     print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+
+
 
 
     # ## TEST FIXED STRATEGY
@@ -177,68 +184,76 @@ def main():
 
 
 
+
+
     # ### TESTING STRATEGIES
-    # plot_path = "./plots/fixed_05"
+    # # strategy = FixedOffsetStrategy(offset=0.2)
+    # # plot_path = "./plots/fixed_02"
 
-    # #random_strategy = RandomStrategy(range_offset=(0, 1))
-    # #fixed_strategy_02 = FixedOffsetStrategy(offset=0.2)
-    # fixed_strategy_05 = FixedOffsetStrategy(offset=0.5)
-    # #as_strategy = AvellanedaStoikovStrategy()
+    # # strategy = FixedOffsetStrategy(offset=0.5)
+    # # plot_path = "./plots/fixed_05"
 
+    # strategy = FixedOffsetStrategy(offset=0.8)
+    # plot_path = "./plots/fixed_08"
+
+    # # strategy = RandomStrategy(range_offset=(0, 1))
+    # # plot_path = "./plots/random"
+
+    # num_simulations_per_combination = 100
     # testing.test_strategies(plot_path=plot_path,
-    #                         strategy=fixed_strategy_05)
-
-    # # plot_path = "./plots/fixed"
-    # # testing.test_fixed_offset_strategy(plot_path=plot_path)
+    #                         strategy=strategy,
+    #                         num_simulations_per_combination=num_simulations_per_combination)
 
 
 
 
 
 
-    # ### LOADING PICKLE FILES
+    # ### LOADING PICKLE FILES AND PLOT ADJUSTED (BETTER-LOOKING) DISTRIBUTIONS (REMOVING TAILS)
 
-    # with open('./plots/random/result.pkl', 'rb') as f:
+    # strategy_name = "random"
+
+    # with open(f'./plots/{strategy_name}/result.pkl', 'rb') as f:
     #     dict_result = pickle.load(f)
 
     # final_pnl = [pnl for pnl in dict_result['final_pnl']
-    #              if pnl<500 and pnl>-500]
+    #              if pnl<30 and pnl>-30]
     # volat = [vol for vol in dict_result['volatility']
-    #          if vol<200]
+    #          if vol<10]
     # min_pnl = [min for min in dict_result['min_pnl']
-    #            if min>-500]
+    #            if min>-30]
     # max_pnl = [max for max in dict_result['max_pnl']
-    #            if max<500]
+    #            if max<30]
 
     # plt.hist(final_pnl, bins=50)
     # plt.xlabel('Final PnL')
     # plt.ylabel('Frequency')
-    # plt.title("Random offset model")
-    # plt.savefig("./plots/random/final_pnl_adjusted")
+    # plt.title(f"{strategy_name} offset model")
+    # plt.savefig(f"./plots/{strategy_name}/final_pnl_adjusted")
     # #plt.show()
     # plt.close()
 
     # plt.hist(volat, bins=50)
     # plt.xlabel('Volatility')
     # plt.ylabel('Frequency')
-    # plt.title("Random offset model")
-    # plt.savefig("./plots/random/vol_adjusted")
+    # plt.title(f"{strategy_name} offset model")
+    # plt.savefig(f"./plots/{strategy_name}/vol_adjusted")
     # #plt.show()
     # plt.close()
 
     # plt.hist(min_pnl, bins=50)
     # plt.xlabel('Min PnL')
     # plt.ylabel('Frequency')
-    # plt.title("Random offset model")
-    # plt.savefig("./plots/random/min_pnl_adjusted")
+    # plt.title(f"{strategy_name} offset model")
+    # plt.savefig(f"./plots/{strategy_name}/min_pnl_adjusted")
     # #plt.show()
     # plt.close()
 
     # plt.hist(max_pnl, bins=50)
     # plt.xlabel('Max PnL')
     # plt.ylabel('Frequency')
-    # plt.title("Random offset model")
-    # plt.savefig("./plots/random/max_pnl_adjusted")
+    # plt.title(f"{strategy_name} offset model")
+    # plt.savefig(f"./plots/{strategy_name}/max_pnl_adjusted")
     # #plt.show()
     # plt.close()
 
@@ -248,49 +263,90 @@ def main():
 
 
 
-    # with open('./plots/as/result.pkl', 'rb') as f:
-    #     dict_result = pickle.load(f)
+    # #### PLOT FINAL PNL DISTRIBUTIONS OF MODELS IN SAME GRAPH
 
-    # final_pnl = [pnl for pnl in dict_result['final_pnl']
-    #              if pnl<500 and pnl>-500]
-    # volat = [vol for vol in dict_result['volatility']
-    #          if vol<200]
-    # min_pnl = [min for min in dict_result['min_pnl']
-    #            if min>-500]
-    # max_pnl = [max for max in dict_result['max_pnl']
-    #            if max<500]
+    # strategy_names = [ "fixed_02", "random", "fixed_05",
+    #                   "fixed_08"
+    #                   ]
 
-    # plt.hist(final_pnl, bins=50)
+    # for strategy in strategy_names:
+    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
+    #         dict_result = pickle.load(f)
+    #         final_pnl = [pnl for pnl in dict_result['final_pnl']
+    #                      #if pnl<10 and pnl>-10
+    #                      ]
+    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
+    #     sns.histplot(final_pnl, label=strategy)
+    # plt.xlim(-15, 15)
+    # plt.ylim(0, 2000)
     # plt.xlabel('Final PnL')
     # plt.ylabel('Frequency')
-    # plt.title("Avellaneda-Stoikov model")
-    # plt.savefig("./plots/as/final_pnl_adjusted")
+    # plt.legend()
+    # plt.title(f"Final PnL baseline models")
+    # plt.savefig(f"./plots/final_pnl_models")
     # #plt.show()
     # plt.close()
 
-    # plt.hist(volat, bins=50)
+
+    # for strategy in strategy_names:
+    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
+    #         dict_result = pickle.load(f)
+    #         volat = [vol for vol in dict_result['volatility']
+    #                 #if vol<10
+    #                 ]
+    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
+    #     sns.histplot(volat, label=strategy)
+    # plt.xlim(0, 6)
+    # plt.ylim(0, 2200)
     # plt.xlabel('Volatility')
     # plt.ylabel('Frequency')
-    # plt.title("Avellaneda-Stoikov model")
-    # plt.savefig("./plots/as/vol_adjusted")
+    # plt.legend()
+    # plt.title(f"Volatility baseline models")
+    # plt.savefig(f"./plots/volatility_models")
     # #plt.show()
     # plt.close()
 
-    # plt.hist(min_pnl, bins=50)
-    # plt.xlabel('Min PnL')
+
+
+    # for strategy in strategy_names:
+    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
+    #         dict_result = pickle.load(f)
+    #         min_pnl = [min for min in dict_result['min_pnl']
+    #            # if min>-30
+    #             ]
+    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
+    #     sns.histplot(min_pnl, label=strategy)
+    # plt.xlim(-6, 0)
+    # plt.ylim(0, 3000)
+    # plt.xlabel('Max Loss')
     # plt.ylabel('Frequency')
-    # plt.title("Avellaneda-Stoikov model")
-    # plt.savefig("./plots/as/min_pnl_adjusted")
+    # plt.legend()
+    # plt.title(f"Max Loss baseline models")
+    # plt.savefig(f"./plots/min_pnl_models")
     # #plt.show()
     # plt.close()
 
-    # plt.hist(max_pnl, bins=50)
+
+
+    # for strategy in strategy_names:
+    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
+    #         dict_result = pickle.load(f)
+    #         max_pnl = [max for max in dict_result['max_pnl']
+    # #            if max<30
+    #         ]
+    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
+    #     sns.histplot(max_pnl, label=strategy)
+    # plt.xlim(0, 15)
+    # plt.ylim(0, 5000)
     # plt.xlabel('Max PnL')
     # plt.ylabel('Frequency')
-    # plt.title("Avellaneda-Stoikov model")
-    # plt.savefig("./plots/as/max_pnl_adjusted")
+    # plt.legend()
+    # plt.title(f"Max PnL baseline models")
+    # plt.savefig(f"./plots/max_pnl_models")
     # #plt.show()
     # plt.close()
+
+
 
 
 

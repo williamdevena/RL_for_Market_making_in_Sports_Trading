@@ -1,16 +1,18 @@
-from strategy.marketMakingStrategy import MarketMakingStrategy
+#from strategy.marketMakingStrategy import MarketMakingStrategy
 
 
-class FixedOffsetStrategy(MarketMakingStrategy):
+class FixedOffsetStrategy(
+    #MarketMakingStrategy
+    ):
     """
     A MarketMakingStrategy subclass representing a market making strategy where the quotes are offset from the
-    current price by a fixed amount. The same offset is added to the ask price and subtracted from the bid price.
+    current price by a fixed amount. The same offset is added to the back price and subtracted from the lay price.
 
     Attributes:
-        offset (float): The fixed offset from the current price for calculating ask and bid prices.
+        offset (float): The fixed offset from the current price for calculating back and lay prices.
 
     Methods:
-        quotes(price): Computes the ask (ra) and bid (rb) prices by adding and subtracting the fixed offset from
+        quotes(price): Computes the back (rb) and lay (rl) prices by adding and subtracting the fixed offset from
                        the current price.
     """
 
@@ -21,20 +23,21 @@ class FixedOffsetStrategy(MarketMakingStrategy):
 
     def quotes(self, price):
         """
-        Computes the ask (ra) and bid (rb) prices by adding and subtracting the fixed offset from the current price.
+        Computes the back (rb) and lay (rl) prices by adding and subtracting the fixed offset from the current price.
 
         Args:
             price (float): The current price.
 
         Returns:
-            tuple: The ask (ra) and bid (rb) prices.
+            tuple: The back (rb) and lay (rl) prices.
         """
-        ra = price + self.offset
-        rb = price - self.offset
+        rb = price + self.offset
+        rl = price - self.offset
 
+        ## quoted prices (odds) can't be lower than 1.0
+        if rl<=1.0:
+            rl = 1.01
         if rb<=1.0:
             rb = 1.01
-        if ra<=1.0:
-            ra = 1.01
 
-        return ra, rb
+        return rb, rl
