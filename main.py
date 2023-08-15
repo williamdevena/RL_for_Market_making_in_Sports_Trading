@@ -14,6 +14,7 @@ import tennisim
 
 from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
     AvellanedaStoikovFramework
+from environments.gym_env import sportsTradingEnvironment
 #from environments.tennis_markov import tennisMarkovSimulator
 from environments.tennis_simulator import tennisSimulator
 from src import data_processing, plotting, testing
@@ -30,6 +31,8 @@ def main():
     dotenv.load_dotenv()
     data_directory = os.environ.get("DATA_DIRECTORY")
     random.seed(42)
+
+
 
 
     # ## EXTRACT ORDER INTENSITIES AND VOLUME RATES FOR LOB SIMULATION
@@ -128,34 +131,39 @@ def main():
 
 
 
-    ### AS SIMULATION USING TENNISIM
-    a_s = 0.65
-    b_s = 0.65
-    k = 2
-
-    price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=a_s, b_s=b_s)
-
-    simulator_framework = AvellanedaStoikovFramework(k=k)
-
-    #strategy = RandomStrategy(range_offset=(0, 1))
-    #plot_path = "./plots/random"
-
-    strategy = FixedOffsetStrategy(offset=0.2)
-    plot_path = "./plots_single_simulations/fixed_02"
-
-    # strategy = AvellanedaStoikovStrategy()
-    # plot_path = "./plots_single_simulations/as"
-
-    num_simulations = 10
-    start_time = time.time()
 
 
-    simulator_framework.run_single_simulation(price_simulator=price_simulator,
-                                       strategy=strategy,
-                                       num_simulations=num_simulations,
-                                       plotting=True,
-                                       plot_path=plot_path)
-    print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+    # ### AS SIMULATION USING TENNISIM
+    # a_s = 0.65
+    # b_s = 0.65
+    # k = 2
+
+    # price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=a_s, b_s=b_s)
+
+    # simulator_framework = AvellanedaStoikovFramework(k=k)
+
+    # #strategy = RandomStrategy(range_offset=(0, 1))
+    # #plot_path = "./plots/random"
+
+    # strategy = FixedOffsetStrategy(offset=0.2)
+    # plot_path = "./plots_single_simulations/fixed_02"
+
+    # # strategy = AvellanedaStoikovStrategy()
+    # # plot_path = "./plots_single_simulations/as"
+
+    # num_simulations = 10
+    # start_time = time.time()
+
+
+    # simulator_framework.run_single_simulation(price_simulator=price_simulator,
+    #                                    strategy=strategy,
+    #                                    num_simulations=num_simulations,
+    #                                    plotting=True,
+    #                                    plot_path=plot_path)
+    # print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
@@ -209,56 +217,6 @@ def main():
 
 
 
-    # ### LOADING PICKLE FILES AND PLOT ADJUSTED (BETTER-LOOKING) DISTRIBUTIONS (REMOVING TAILS)
-
-    # strategy_name = "random"
-
-    # with open(f'./plots/{strategy_name}/result.pkl', 'rb') as f:
-    #     dict_result = pickle.load(f)
-
-    # final_pnl = [pnl for pnl in dict_result['final_pnl']
-    #              if pnl<30 and pnl>-30]
-    # volat = [vol for vol in dict_result['volatility']
-    #          if vol<10]
-    # min_pnl = [min for min in dict_result['min_pnl']
-    #            if min>-30]
-    # max_pnl = [max for max in dict_result['max_pnl']
-    #            if max<30]
-
-    # plt.hist(final_pnl, bins=50)
-    # plt.xlabel('Final PnL')
-    # plt.ylabel('Frequency')
-    # plt.title(f"{strategy_name} offset model")
-    # plt.savefig(f"./plots/{strategy_name}/final_pnl_adjusted")
-    # #plt.show()
-    # plt.close()
-
-    # plt.hist(volat, bins=50)
-    # plt.xlabel('Volatility')
-    # plt.ylabel('Frequency')
-    # plt.title(f"{strategy_name} offset model")
-    # plt.savefig(f"./plots/{strategy_name}/vol_adjusted")
-    # #plt.show()
-    # plt.close()
-
-    # plt.hist(min_pnl, bins=50)
-    # plt.xlabel('Min PnL')
-    # plt.ylabel('Frequency')
-    # plt.title(f"{strategy_name} offset model")
-    # plt.savefig(f"./plots/{strategy_name}/min_pnl_adjusted")
-    # #plt.show()
-    # plt.close()
-
-    # plt.hist(max_pnl, bins=50)
-    # plt.xlabel('Max PnL')
-    # plt.ylabel('Frequency')
-    # plt.title(f"{strategy_name} offset model")
-    # plt.savefig(f"./plots/{strategy_name}/max_pnl_adjusted")
-    # #plt.show()
-    # plt.close()
-
-
-
 
 
 
@@ -282,6 +240,47 @@ def main():
     # plotting.plot_results_of_all_strategies_test(results_path="./plots",
     #                                              strategies_names_list=strategy_names,
     #                                              metrics_list=metrics)
+
+
+
+
+
+
+
+
+    ### TESTING GYM ENVIRONMENT
+    a_s = 0.7
+    b_s = 0.7
+    k = 7
+    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s, b_s=b_s, k=k)
+
+    prices = []
+    back_prices = []
+    lay_prices = []
+    pnl_list = []
+    inventory = []
+    done = False
+    #for x in range(200):
+    while not done:
+        rb = env.price[env.timestep] + 0.2
+        rl = env.price[env.timestep] - 0.2
+        back_prices.append(rb)
+        lay_prices.append(rl)
+        action = (rb, rl)
+
+        [price, _], pnl, done = env.step(action=action)
+        pnl_list.append(pnl)
+        prices.append(price)
+        inventory.append(env.q['stake'])
+
+    # plt.plot(prices)
+    # plt.plot(back_prices)
+    # plt.plot(lay_prices)
+
+    #plt.plot(pnl_list)
+    plt.plot(inventory)
+
+    plt.show()
 
 
 

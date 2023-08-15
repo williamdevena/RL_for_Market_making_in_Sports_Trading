@@ -24,17 +24,18 @@ class SportsTradingEnvironment(gym.Env):
         # Initialize state variables
         #self.mid_price = self.simulate_mid_price()
         self.timestep = 0
-        self.q = {"St": 0, "Ot": 0}  # St: stake, Ot: odds
+        self.q = {"stake": 0, "odds": 0}  # St: stake, Ot: odds
         self.x = 0
         self.PnL = 0
         self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
         self.price = self.simulate_mid_price()
+        self.max_timestep = len(self.price)
 
         ### AS framework parameters
         self.k = k
-        dt = 0.01
+        self.dt = 0.01
         self.M = 0.5
-        self.A = 1./dt/math.exp(self.k*self.M/2)
+        self.A = 1./self.dt/math.exp(self.k*self.M/2)
 
 
 
@@ -42,6 +43,20 @@ class SportsTradingEnvironment(gym.Env):
         _, price = self.price_simulator.simulate()
 
         return price
+
+
+    def combine_bets(self, list_bets):
+        stake = sum([bet['stake'] for bet in list_bets])
+
+        if stake==0:
+            print("Total stake can't be 0")
+            return False
+
+        odds = sum([(bet['odds'] * (bet['stake']/stake)) for bet in list_bets])
+
+        return {'stake': stake,
+                'odds': odds}
+
 
 
     def calculate_cash_out(self, stake, odds, current_odds):
@@ -70,14 +85,7 @@ class SportsTradingEnvironment(gym.Env):
         return dNb, dNl
 
 
-    def step(self, action):
-        # Action: [back_price, lay_price]
-        rb, rl = action
-
-        # Simulate order book using Avellaneda-Stoikov framework and check if back and lay orders are filled
-        dNb, dNl = self.avellaneda_stoikov_framework_step(rb=rb, rl=rl, price=self.price)
-
-        ## Update inventory
+    def update_inventory(self, dNb, dNl, rb, rl):
         if self.q=={'stake': 0, 'odds': 0}:
             if (dNb - dNl)==0:
                 self.q = self.q
@@ -93,24 +101,33 @@ class SportsTradingEnvironment(gym.Env):
                                                     {'stake': dNb, 'odds': rb},
                                                     {'stake': -dNl, 'odds': rl}])
 
+
+    def step(self, action):
+        # Action: [back_price, lay_price]
+        rb, rl = action
+        # Simulate order book using Avellaneda-Stoikov framework and check if back and lay orders are filled
+        dNb, dNl = self.avellaneda_stoikov_framework_step(rb=rb, rl=rl, price=self.price[self.timestep])
+        self.update_inventory(dNb=dNb, dNl=dNl, rb=rb, rl=rl)
         ### Update Cash and PnL
         self.x = self.x - dNb + dNl
         self.PnL = self.calculate_cash_out(stake=self.q["stake"],
                                             odds=self.q["odds"],
                                             current_odds=self.price[self.timestep])
-
         # Move to the next timestep
         self.timestep += 1
 
         # Return the state, reward, done, and any additional info
-        return [self.price, self.timestep], self.PnL, self.timestep >= 1000, {}
+        return [self.price[self.timestep], self.timestep], self.PnL, self.timestep >= self.max_timestep-1
+
 
     def reset(self):
         self.price = self.simulate_mid_price()
+        self.max_timestep = len(self.price)
         self.timestep = 0
         self.q = {"stake": 0, "odds": 0}
         self.PnL = 0
         return [self.price, self.timestep]
+
 
     def render(self, mode='human'):
         # For now, just print the current state. You can enhance this for better visualization later.
