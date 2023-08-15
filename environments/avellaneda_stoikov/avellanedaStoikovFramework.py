@@ -7,6 +7,7 @@ import dataframe_image as dfi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from alive_progress import alive_it
 
 from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
@@ -98,12 +99,13 @@ class AvellanedaStoikovFramework():
             os.makedirs(plot_path)
 
         final_pnl = np.zeros((num_simulations))
-        volatility_pnl = np.zeros((num_simulations))
+        volatility_returns = np.zeros((num_simulations))
         min_pnl = np.zeros((num_simulations))
         max_pnl = np.zeros((num_simulations))
-        #returns = np.zeros((num_simulations))
+        mean_return = np.zeros((num_simulations))
         sharpe_ratio = np.zeros((num_simulations))
         sortino_ratio = np.zeros((num_simulations))
+        mean_inv_stake = np.zeros((num_simulations))
 
         list_prices = []
 
@@ -190,26 +192,55 @@ class AvellanedaStoikovFramework():
                 #     min_q_held = q[n+1]
 
             final_pnl[i_sim] = pnl[-1]
-            volatility_pnl[i_sim] = np.std(pnl)
+            #adj_pnl = np.where(pnl==0, 0.00001, pnl)
+            returns = np.diff(pnl, prepend=0)
+            #returns = np.insert(returns, 0, 0)
+            #print(returns)
+            #print([pnl[:5]])
             min_pnl[i_sim] = np.min(pnl)
             max_pnl[i_sim] = np.max(pnl)
-            returns = np.diff(pnl, prepend=0)
+
             downside_std = np.nanstd(np.clip(returns, np.NINF, 0, out=None))
-            sharpe_ratio[i_sim] = np.mean(returns)/np.std(returns)
-            sortino_ratio[i_sim] = np.mean(returns)/downside_std
+            mean_ret = np.mean(returns)
+            print(mean_ret)
+            std_returns = np.std(returns)
+            mean_return[i_sim] = mean_ret
+            volatility_returns[i_sim] = std_returns
+
+            if mean_ret==0 or std_returns==0:
+                #print(mean_ret, std_returns)
+                sharpe_ratio[i_sim] = 0
+            else:
+                sharpe_ratio[i_sim] = mean_ret/std_returns
+
+
+            if mean_ret==0 or downside_std==0:
+                #print(mean_ret, std_returns)
+                sortino_ratio[i_sim] = 0
+            else:
+                # if downside_std==0:
+                #     print(mean_ret, downside_std)
+                sortino_ratio[i_sim] = mean_ret/downside_std
+
+            inv_stake = [inv['stake'] for inv in q]
+            mean_inv_stake[i_sim] = np.mean(inv_stake)
 
 
         df_final_pnl = pd.DataFrame(final_pnl, columns=['Final PnL'])
-        df_volatility = pd.DataFrame(volatility_pnl, columns=['Volatility'])
+        df_mean_return = pd.DataFrame(mean_return, columns=['Mean Return'])
+        df_volatility = pd.DataFrame(volatility_returns, columns=['Volatility'])
         df_min_pnl = pd.DataFrame(min_pnl, columns=['Min PnL'])
         df_max_pnl = pd.DataFrame(max_pnl, columns=['Max PnL'])
         df_sharpe = pd.DataFrame(sharpe_ratio, columns=['Sharpe Ratio'])
         df_sortino = pd.DataFrame(sortino_ratio, columns=['Sortino Ratio'])
+        df_mean_inv_stake = pd.DataFrame(mean_inv_stake, columns=['Mean Inv. Stake'])
 
         if plotting:
             print("\nResults over: %d simulations\n"%num_simulations)
             print("Final PnL")
             print(df_final_pnl.describe())
+            print("Mean Return")
+            print(df_mean_return.describe())
             print("Volatility")
             print(df_volatility.describe())
             print("Min PnL (Max Loss)")
@@ -220,9 +251,11 @@ class AvellanedaStoikovFramework():
             print(df_sharpe.describe())
             print("Sortino Ratio")
             print(df_sortino.describe())
+            print("Mean Inv. Stake")
+            print(df_mean_inv_stake.describe())
 
             f = plt.figure(figsize=(15, 15))
-            f.add_subplot(2, 2, 1)
+            f.add_subplot(3, 2, 1)
             plt.plot(t, price, color='black', label='Mid price')
             # plt.plot(t, r, color='blue',
             # #linestyle='dashed',
@@ -233,36 +266,47 @@ class AvellanedaStoikovFramework():
             plt.plot(t, rl, color='lime',
             #linestyle='', marker='o',
             label='Lay price', markersize='2')
-            plt.xlabel('Time', fontsize=16)
-            plt.ylabel('Price', fontsize=16)
+            plt.xlabel('Time')
+            plt.ylabel('Price')
             plt.grid(True)
             plt.legend()
             #plt.show()
 
-            f.add_subplot(2, 2, 2)
+            f.add_subplot(3, 2, 2)
             plt.plot(t, pnl[:-1], color='black', label='P&L')
-            plt.xlabel('Time', fontsize=16)
-            plt.ylabel('PnL [USD]', fontsize=16)
+            plt.xlabel('Time')
+            plt.ylabel('PnL [USD]')
             plt.grid(True)
             plt.legend()
 
             stake = [bet['stake'] for bet in q]
-            f.add_subplot(2, 2, 3)
+            f.add_subplot(3, 2, 3)
             #plt.plot(t, q[:-1]['stake'], color='black', label='Stake held')
             plt.plot(t, stake[:-1], color='black', label='Total stake')
-            plt.xlabel('Time', fontsize=16)
-            plt.ylabel('Inventory', fontsize=16)
+            plt.xlabel('Time')
+            plt.ylabel('Inventory')
             plt.grid(True)
             plt.legend()
 
             odds = [bet['odds'] for bet in q]
-            f.add_subplot(2, 2, 4)
+            f.add_subplot(3, 2, 4)
             #plt.plot(t, q[:-1]['stake'], color='black', label='Stake held')
             plt.plot(t, odds[:-1], color='black', label='Total odds')
-            plt.xlabel('Time', fontsize=16)
-            plt.ylabel('Inventory', fontsize=16)
+            plt.xlabel('Time')
+            plt.ylabel('Inventory')
             plt.grid(True)
             plt.legend()
+
+
+            f.add_subplot(3, 2, 5)
+            #plt.plot(t, q[:-1]['stake'], color='black', label='Stake held')
+            plt.plot(t, returns[:-1], color='black', label='Returns')
+            plt.xlabel('Time')
+            plt.ylabel('Returns')
+            plt.grid(True)
+            plt.legend()
+
+
 
             plt.savefig(os.path.join(plot_path, "last_simulation"))
             #plt.show()
@@ -280,86 +324,122 @@ class AvellanedaStoikovFramework():
             # range_min = int(min(pnl_sim) - abs(min(pnl_sim)))
             # range_max = int(max(pnl_sim) + abs(min(pnl_sim)))
 
-            plt.hist(final_pnl,
-            bins=50,
-            #  range=(range_min, range_max)
-            )
-            plt.xlabel('PnL', fontsize=16)
-            plt.ylabel('Frequency', fontsize=16)
+
+
+            bin_number = 30
+
+            # plt.hist(final_pnl,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(final_pnl, bins=bin_number)
+            plt.xlabel('PnL')
+            plt.ylabel('Frequency')
             plt.savefig(os.path.join(plot_path, "final_pnl"))
             plt.close()
             #dfi.export(df_final_pnl.describe(), os.path.join(plot_path, 'df_final_pnl.png'))
 
-            plt.hist(volatility_pnl,
-            bins=50,
-            #  range=(range_min, range_max)
-            )
-            plt.xlabel('Volatility', fontsize=16)
-            plt.ylabel('Frequency', fontsize=16)
+            # plt.hist(final_pnl,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(mean_return, bins=bin_number)
+            plt.xlabel('Mean Return')
+            plt.ylabel('Frequency')
+            plt.savefig(os.path.join(plot_path, "mean_return"))
+            plt.close()
+            #dfi.export(df_final_pnl.describe(), os.path.join(plot_path, 'df_final_pnl.png'))
+
+            # plt.hist(volatility_returns,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(volatility_returns, bins=bin_number)
+            plt.xlabel('Volatility')
+            plt.ylabel('Frequency')
             plt.savefig(os.path.join(plot_path, "volatility"))
             plt.close()
             #dfi.export(df_volatility.describe(), os.path.join(plot_path, 'df_volatility.png'))
 
-            plt.hist(min_pnl,
-            bins=50,
-            #  range=(range_min, range_max)
-            )
-            plt.xlabel('Min PnL (Max Loss)', fontsize=16)
-            plt.ylabel('Frequency', fontsize=16)
+            # plt.hist(min_pnl,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(min_pnl, bins=bin_number)
+            plt.xlabel('Min PnL (Max Loss)')
+            plt.ylabel('Frequency')
             plt.savefig(os.path.join(plot_path, "min_pnl"))
             plt.close()
             #dfi.export(df_min_pnl.describe(), os.path.join(plot_path, 'df_min_pnl.png'))
 
-            plt.hist(max_pnl,
-            bins=50,
-            #  range=(range_min, range_max)
-            )
-            plt.xlabel('Max PnL', fontsize=16)
-            plt.ylabel('Frequency', fontsize=16)
+            # plt.hist(max_pnl,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(max_pnl, bins=bin_number)
+            plt.xlabel('Max PnL')
+            plt.ylabel('Frequency')
             plt.savefig(os.path.join(plot_path, "max_pnl"))
             plt.close()
             #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
 
-            plt.hist(sharpe_ratio,
-            bins=50,
-            #  range=(range_min, range_max)
-            )
-            plt.xlabel('Sharpe Ratio', fontsize=16)
-            plt.ylabel('Frequency', fontsize=16)
+            # plt.hist(sharpe_ratio,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(sharpe_ratio, bins=bin_number)
+            plt.xlabel('Sharpe Ratio')
+            plt.ylabel('Frequency')
             plt.savefig(os.path.join(plot_path, "sharpe_ratio"))
             plt.close()
             #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
 
-            plt.hist(sortino_ratio,
-            bins=50,
-            #  range=(range_min, range_max)
-            )
-            plt.xlabel('Sortino ratio', fontsize=16)
-            plt.ylabel('Frequency', fontsize=16)
+            # plt.hist(sortino_ratio,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(sortino_ratio, bins=bin_number)
+            plt.xlabel('Sortino ratio')
+            plt.ylabel('Frequency')
             plt.savefig(os.path.join(plot_path, "sortino_ratio"))
+            plt.close()
+            #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
+
+            # plt.hist(mean_inv_stake,
+            # bins=50,
+            # #  range=(range_min, range_max)
+            # )
+            sns.histplot(mean_inv_stake, bins=bin_number)
+            plt.xlabel('Mean Inventory Stake')
+            plt.ylabel('Frequency')
+            plt.savefig(os.path.join(plot_path, "mean_inv_stake"))
             plt.close()
             #dfi.export(df_max_pnl.describe(), os.path.join(plot_path, 'df_max_pnl.png'))
 
 
 
             final_df_describe = pd.concat(objs=[df_final_pnl.describe(),
+                                                df_mean_return.describe(),
                                                 df_volatility.describe(),
                                                 df_min_pnl.describe(),
                                                 df_max_pnl.describe(),
                                                 df_sharpe.describe(),
-                                                df_sortino.describe()],
+                                                df_sortino.describe(),
+                                                df_mean_inv_stake.describe()],
                                           axis='columns')
 
             dfi.export(final_df_describe, os.path.join(plot_path, 'all_describes.png'))
             print(final_df_describe.to_latex())
 
 
-        return {'final_pnl':final_pnl,
-                'volatility': volatility_pnl,
+        return {'final_pnl': final_pnl,
+                'mean_return': mean_return,
+                'volatility': volatility_returns,
                 'min_pnl': min_pnl,
                 'max_pnl': max_pnl,
                 'sharpe_ratio': sharpe_ratio,
-                'sortino_ratio': sortino_ratio,}
+                'sortino_ratio': sortino_ratio,
+                'mean_inv_stake': mean_inv_stake,}
 
 
 

@@ -16,7 +16,7 @@ from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
     AvellanedaStoikovFramework
 #from environments.tennis_markov import tennisMarkovSimulator
 from environments.tennis_simulator import tennisSimulator
-from src import data_processing, testing
+from src import data_processing, plotting, testing
 from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 from strategy.fixedOffsetStrategy import FixedOffsetStrategy
 from strategy.randomStrategy import RandomStrategy
@@ -146,7 +146,7 @@ def main():
     # strategy = AvellanedaStoikovStrategy()
     # plot_path = "./plots_single_simulations/as"
 
-    num_simulations = 100
+    num_simulations = 10
     start_time = time.time()
 
 
@@ -186,18 +186,18 @@ def main():
 
 
 
-    # ### TESTING STRATEGIES
-    # # strategy = FixedOffsetStrategy(offset=0.2)
-    # # plot_path = "./plots/fixed_02"
+    ### TESTING STRATEGIES
+    # strategy = FixedOffsetStrategy(offset=0.2)
+    # plot_path = "./plots/fixed_02"
 
-    # # strategy = FixedOffsetStrategy(offset=0.5)
-    # # plot_path = "./plots/fixed_05"
+    # strategy = FixedOffsetStrategy(offset=0.5)
+    # plot_path = "./plots/fixed_05"
 
     # strategy = FixedOffsetStrategy(offset=0.8)
     # plot_path = "./plots/fixed_08"
 
-    # # strategy = RandomStrategy(range_offset=(0, 1))
-    # # plot_path = "./plots/random"
+    # strategy = RandomStrategy(range_offset=(0, 1))
+    # plot_path = "./plots/random"
 
     # num_simulations_per_combination = 100
     # testing.test_strategies(plot_path=plot_path,
@@ -264,153 +264,26 @@ def main():
 
 
     # #### PLOT FINAL PNL DISTRIBUTIONS OF MODELS IN SAME GRAPH
-
-    # strategy_names = [ "fixed_02", "random", "fixed_05",
+    # strategy_names = [ "fixed_02",
+    #                   "random", "fixed_05",
     #                   "fixed_08"
     #                   ]
+    # metrics = [
+    #     #"final_pnl",
+    #     # "volatility",
+    #     "mean_return",
+    #     #"min_pnl",
+    #     # "max_pnl",
+    #     # "sharpe_ratio",
+    #     # "sortino_ratio",
+    #     # "mean_inv_stake"
+    #     ]
 
-    # for strategy in strategy_names:
-    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
-    #         dict_result = pickle.load(f)
-    #         final_pnl = [pnl for pnl in dict_result['final_pnl']
-    #                      #if pnl<10 and pnl>-10
-    #                      ]
-    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
-    #     sns.histplot(final_pnl, label=strategy)
-    # plt.xlim(-15, 15)
-    # plt.ylim(0, 2000)
-    # plt.xlabel('Final PnL')
-    # plt.ylabel('Frequency')
-    # plt.legend()
-    # plt.title(f"Final PnL baseline models")
-    # plt.savefig(f"./plots/final_pnl_models")
-    # #plt.show()
-    # plt.close()
+    # plotting.plot_results_of_all_strategies_test(results_path="./plots",
+    #                                              strategies_names_list=strategy_names,
+    #                                              metrics_list=metrics)
 
 
-    # for strategy in strategy_names:
-    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
-    #         dict_result = pickle.load(f)
-    #         volat = [vol for vol in dict_result['volatility']
-    #                 #if vol<10
-    #                 ]
-    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
-    #     sns.histplot(volat, label=strategy)
-    # plt.xlim(0, 6)
-    # plt.ylim(0, 2200)
-    # plt.xlabel('Volatility')
-    # plt.ylabel('Frequency')
-    # plt.legend()
-    # plt.title(f"Volatility baseline models")
-    # plt.savefig(f"./plots/volatility_models")
-    # #plt.show()
-    # plt.close()
-
-
-
-    # for strategy in strategy_names:
-    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
-    #         dict_result = pickle.load(f)
-    #         min_pnl = [min for min in dict_result['min_pnl']
-    #            # if min>-30
-    #             ]
-    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
-    #     sns.histplot(min_pnl, label=strategy)
-    # plt.xlim(-6, 0)
-    # plt.ylim(0, 3000)
-    # plt.xlabel('Max Loss')
-    # plt.ylabel('Frequency')
-    # plt.legend()
-    # plt.title(f"Max Loss baseline models")
-    # plt.savefig(f"./plots/min_pnl_models")
-    # #plt.show()
-    # plt.close()
-
-
-
-    # for strategy in strategy_names:
-    #     with open(f'./plots/{strategy}/result.pkl', 'rb') as f:
-    #         dict_result = pickle.load(f)
-    #         max_pnl = [max for max in dict_result['max_pnl']
-    # #            if max<30
-    #         ]
-    #     #plt.hist(final_pnl, bins=range(-20, 20, 1), label=strategy)
-    #     sns.histplot(max_pnl, label=strategy)
-    # plt.xlim(0, 15)
-    # plt.ylim(0, 5000)
-    # plt.xlabel('Max PnL')
-    # plt.ylabel('Frequency')
-    # plt.legend()
-    # plt.title(f"Max PnL baseline models")
-    # plt.savefig(f"./plots/max_pnl_models")
-    # #plt.show()
-    # plt.close()
-
-
-
-
-
-
-
-    # ### cashout calculator test
-    # framework = AvellanedaStoikovFramework()
-    # current_odds = 2.0
-
-    # # dict_bets = {
-    # #     'back': [
-    # #        # {'stake': 10, 'odds': 2.5},
-    # #        # {'stake': 5, 'odds': 3.0},
-    # #     ],
-    # #     'lay': [
-    # #         {'stake': 10, 'odds': 3.0},
-    # #         {'stake': 15, 'odds': 2.5},
-    # #         {'stake': 15, 'odds': 2.0},
-    # #         {'stake': 15, 'odds': 2.5},
-    # #     ]
-    # # }
-
-
-    # list_bets = [
-    #     {'stake': 0, 'odds': 0},
-    #     #{'stake': 10, 'odds': 2.5},
-    #     # {'stake': 5, 'odds': 3.0},
-    #     # {'stake': 10, 'odds': 3.0},
-    #     #{'stake': -5, 'odds': 2.0},
-    #     # {'stake': -15, 'odds': 2.0},
-    #     # {'stake': -15, 'odds': 2.5},
-    # ]
-
-
-
-    # cashouts_back = [framework.calculate_cash_out(type="back",
-    #                                             stake=bet['stake'],
-    #                                             odds=bet['odds'],
-    #                                             current_odds=current_odds)
-    #                 for bet in dict_bets['back']]
-
-    # cashout_lay = [framework.calculate_cash_out(type="lay",
-    #                                             stake=bet['stake'],
-    #                                             odds=bet['odds'],
-    #                                             current_odds=current_odds)
-    #                 for bet in dict_bets['lay']]
-
-    # cashouts = cashouts_back + cashout_lay
-    # #print(cashouts)
-    # print(f"Total cashout: {sum(cashouts)}")
-
-
-    # combined_bet = framework.combine_bets(list_bets=list_bets)
-    # print(combined_bet)
-    # cashout = framework.calculate_cash_out(stake=combined_bet['stake'],
-    #                                        odds=combined_bet['odds'],
-    #                                        current_odds=current_odds)
-    # print(f"Combined cashout: {cashout}")
-
-
-    # if round(cashout, 3) == round(sum(cashouts), 3):
-    #     print("TRUE")
-    # else:
-    #     print("FALSE")
 
 
 
