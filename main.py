@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import tennisim
+from alive_progress import alive_it
 
 from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
     AvellanedaStoikovFramework
@@ -155,38 +156,12 @@ def main():
     # # plot_path = "./plots_single_simulations/as"
 
     # num_simulations = 10
-    # start_time = time.time()
-
 
     # simulator_framework.run_single_simulation(price_simulator=price_simulator,
     #                                    strategy=strategy,
     #                                    num_simulations=num_simulations,
     #                                    plotting=True,
     #                                    plot_path=plot_path)
-    # print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-
-
-
-
-    # ## TEST FIXED STRATEGY
-    # a_s = 0.7
-    # b_s = 0.7
-
-    # price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=a_s, b_s=b_s)
-    # simulator_framework = AvellanedaStoikovFramework()
-    # num_simulations = 100
-
-    # for offset in np.arange(0.1, 1.1, 0.1):
-    #     print(f"\nOFFSET: {offset}")
-    #     strategy = FixedOffsetStrategy(offset=offset)
-    #     simulator_framework.run_simulation(price_simulator=price_simulator,
-    #                                        strategy=strategy,
-    #                                        num_simulations=num_simulations,
-    #                                        plotting=False)
 
 
 
@@ -248,46 +223,147 @@ def main():
 
 
 
-    ### TESTING GYM ENVIRONMENT
-    a_s = 0.7
-    b_s = 0.7
-    k = 7
-    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s, b_s=b_s, k=k)
+    # ### TESTING GYM ENVIRONMENT
+    # a_s = 0.7
+    # b_s = 0.7
+    # k = 7
+    # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s, b_s=b_s, k=k)
 
-    prices = []
-    back_prices = []
-    lay_prices = []
-    pnl_list = []
-    inventory = []
-    done = False
-    #for x in range(200):
-    while not done:
-        # rb = env.price[env.timestep] + 0.2
-        # rl = env.price[env.timestep] - 0.2
-        #action = (rb, rl)
+    # # prices = []
+    # # back_prices = []
+    # # lay_prices = []
+    # pnl_list = []
+    # inventory = []
+    # done = False
+    # #for x in range(200):
+    # while not done:
+    #     action = env.action_space.sample()
 
-        action = env.action_space.sample()
-        rb = env.price[env.timestep] + action[0]
-        rl = env.price[env.timestep] - action[1]
+    #     [_, _], pnl, done = env.step(action=action)
+    #     pnl_list.append(pnl)
+    #     #prices.append(price)
+    #     inventory.append(env.q['stake'])
 
-        back_prices.append(rb)
-        lay_prices.append(rl)
+    # plt.plot(env.price)
+    # plt.plot(env.back_prices)
+    # plt.plot(env.lay_prices)
+    # plt.show()
+    # plt.close()
 
-        [price, _], pnl, done = env.step(action=action)
-        pnl_list.append(pnl)
-        prices.append(price)
-        inventory.append(env.q['stake'])
+    # plt.plot(pnl_list, label="PnL")
+    # plt.plot(inventory, label="Inventory")
+    # plt.legend()
+    # plt.show()
 
-    plt.plot(prices)
-    plt.plot(back_prices)
-    plt.plot(lay_prices)
 
-    #plt.plot(pnl_list)
-    #plt.plot(inventory)
 
+
+
+    # ### TEST ENVRIONMENT FOR ERRORS
+    # from stable_baselines3.common.env_checker import check_env
+    # from stable_baselines3.common.env_util import make_vec_env
+
+    # # Instantiate the env
+    # a_s = 0.65
+    # b_s = 0.65
+    # k = 2
+
+    # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+    #                                                         b_s=b_s,
+    #                                                         k=k)
+    # # It will check your custom environment and output additional warnings if needed
+    # check_env(env)
+
+
+
+
+
+
+    #### TEST STABLE-BASELINES
+
+
+    # ### TRAIN
+    # import gymnasium as gym
+    # from stable_baselines3 import DQN
+
+    # # # env = gym.make("CartPole-v1", render_mode="human")
+    # a_s = 0.65
+    # b_s = 0.65
+    # k = 2
+    # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+    #                                                         b_s=b_s,
+    #                                                         k=k)
+    # model = DQN("MlpPolicy", env, verbose=1)
+    # model.learn(total_timesteps=1000000, log_interval=100, progress_bar=True)
+    # model.save("test_DQN")
+
+
+    ## TEST
+    # del model # remove to demonstrate saving and loading
+    # model = DQN.load("test_DQN")
+
+    # #print(env.reset())
+    # obs, info = env.reset()
+    # #prices = []
+    # terminated = False
+
+    # while not terminated:
+    #     #print(obs)
+    #     action, _states = model.predict(obs, deterministic=True)
+    #     #print(action)
+    #     obs, reward, terminated, truncated, info = env.step(action)
+
+    # # plt.plot(env.price, label="mid-price")
+    # # plt.plot(env.back_prices, label="back price")
+    # # plt.plot(env.lay_prices, label="lay price")
+    # # plt.legend()
+    # # print(len(env.price), len(env.back_prices), len(env.lay_prices))
+
+    # plt.plot(env.price, label="mid-price")
+    # plt.plot(env.list_pnl, label="PnL")
+    # plt.plot(env.list_inventory_stake, label="Stake")
+    # plt.plot(env.list_inventory_odds, label="Odds")
+    # plt.legend()
+
+    # plt.show()
+
+
+
+
+    #### TEST MODEL ON ENV
+    import gymnasium as gym
+    from stable_baselines3 import DQN
+
+    # # env = gym.make("CartPole-v1", render_mode="human")
+    a_s = 0.65
+    b_s = 0.65
+    k = 2
+    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+                                                            b_s=b_s,
+                                                            k=k)
+
+    model = DQN.load("test_DQN")
+
+    num_episodes = 100
+    list_final_pnl = []
+    for episode in alive_it(range(num_episodes)):
+        obs, info = env.reset()
+        terminated = False
+        while not terminated:
+            ## MODEL
+            action, _states = model.predict(obs, deterministic=True)
+            ## RANDOM
+            # action = env.action_space.sample()
+
+            #print(action)
+            obs, reward, terminated, truncated, info = env.step(action)
+        list_final_pnl.append(env.list_pnl[-1])
+
+    mean_pnl = np.mean(list_final_pnl)
+    print(f"Mean pnl: {mean_pnl}")
+
+    plt.plot(list_final_pnl)
     plt.show()
-
-
 
 
 

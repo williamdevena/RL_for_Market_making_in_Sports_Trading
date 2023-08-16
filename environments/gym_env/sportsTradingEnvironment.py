@@ -10,26 +10,37 @@ from environments.tennis_simulator import tennisSimulator
 
 class SportsTradingEnvironment(gym.Env):
     def __init__(self, a_s, b_s, k):
-        super(SportsTradingEnvironment, self).__init__()
+        super().__init__()
         self.a_s = a_s
         self.b_s = b_s
 
-        # Define action and observation space
-        # Assuming the action space is continuous with back and lay prices ranging from some reasonable range (e.g., 1.01 to 100)
-        self.action_space = gym.spaces.Box(low=0.0, high=1, shape=(2,), dtype=np.float32)
+        possible_discrete_offsets = np.arange(0.0, 1.0, 0.1)
 
-        # Observation: mid-price and timestep
-        self.observation_space = gym.spaces.Box(low=np.array([0, 0]), high=np.array([100, 1000]), dtype=np.float32)
+        # self.action_space = gym.spaces.Box(low=0.0, high=1, shape=(2,), dtype=np.float32)
+        #self.action_space = gym.spaces.MultiDiscrete([10, 10])
+        self.action_space = gym.spaces.Discrete(100)
+
+        # Observation: inventory and timestep
+        #self.observation_space = gym.spaces.Box(low=np.array([0, 0]), high=np.array([200, 500]), dtype=np.float32)
+
+        ## normalized (inv.stake, inv.odds, timestep)
+        self.observation_space = gym.spaces.Box(low=np.array([0, 0, 0]), high=np.array([1, 1, 1]), dtype=np.float32)
+
 
         # Initialize state variables
         #self.mid_price = self.simulate_mid_price()
         self.timestep = 0
         self.q = {"stake": 0, "odds": 0}  # St: stake, Ot: odds
         self.x = 0
-        self.PnL = 0
+        self.pnl = 0
         self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
         self.price = self.simulate_mid_price()
         self.max_timestep = len(self.price)
+        self.back_prices = []
+        self.lay_prices = []
+        self.list_pnl = []
+        self.list_inventory_stake = []
+        self.list_inventory_odds = []
 
         ### AS framework parameters
         self.k = k
@@ -102,36 +113,70 @@ class SportsTradingEnvironment(gym.Env):
                                                     {'stake': -dNl, 'odds': rl}])
 
 
+
+    def decode_action(self, action):
+        # Decode the combined action into back and lay offsets
+        back_offset = round((action // 10) * 0.1, 1)
+        lay_offset = round((action % 10) * 0.1, 1)
+        #print(action, back_offset, lay_offset)
+
+        return back_offset, lay_offset
+
+
     def step(self, action):
-        # Action: [back_price, lay_price]
-        spread_b, spread_l = action
-        rb = self.price[self.timestep] + spread_b
-        rl = self.price[self.timestep] - spread_l
+        # # Convert to actual offset
+        # back_offset = action[0] * 0.1
+        # lay_offset = action[1] * 0.1
+        # rb = self.price[self.timestep] + back_offset
+        # rl = self.price[self.timestep] - lay_offset
+
+        back_offset, lay_offset = self.decode_action(action)
+        rb = self.price[self.timestep] + back_offset
+        rl = self.price[self.timestep] - lay_offset
+
+        # # Action: [back_price, lay_price]
+        # spread_b, spread_l = action
+        # rb = self.price[self.timestep] + spread_b
+        # rl = self.price[self.timestep] - spread_l
+
         # Simulate order book using Avellaneda-Stoikov framework and check if back and lay orders are filled
         dNb, dNl = self.avellaneda_stoikov_framework_step(rb=rb, rl=rl, price=self.price[self.timestep])
         self.update_inventory(dNb=dNb, dNl=dNl, rb=rb, rl=rl)
+
         ### Update Cash and PnL
         self.x = self.x - dNb + dNl
-        self.PnL = self.calculate_cash_out(stake=self.q["stake"],
+        self.pnl = self.calculate_cash_out(stake=self.q["stake"],
                                             odds=self.q["odds"],
                                             current_odds=self.price[self.timestep])
         # Move to the next timestep
         self.timestep += 1
 
+        self.back_prices.append(rb)
+        self.lay_prices.append(rl)
+        self.list_inventory_stake.append(self.q['stake'])
+        self.list_inventory_odds.append(self.q['odds'])
+        self.list_pnl.append(self.pnl)
+
         # Return the state, reward, done, and any additional info
-        return [self.price[self.timestep], self.timestep], self.PnL, self.timestep >= self.max_timestep-1
+        return np.array([self.q['stake'], self.q['odds'], self.timestep], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
 
 
-    def reset(self):
+    def reset(self, seed=None):
         self.price = self.simulate_mid_price()
         self.max_timestep = len(self.price)
         self.timestep = 0
         self.q = {"stake": 0, "odds": 0}
-        self.PnL = 0
-        return [self.price, self.timestep]
+        self.pnl = 0
+        self.list_pnl = []
+        self.back_prices = []
+        self.lay_prices = []
+        self.list_inventory_odds = []
+        self.list_inventory_stake = []
+
+        return np.array([self.q['stake'], self.q['odds'], self.timestep], dtype=np.float32), {}
 
 
     def render(self, mode='human'):
         # For now, just print the current state. You can enhance this for better visualization later.
-        print(f"Mid Price: {self.price[self.timestep]}, Time: {self.timestep}, Inventory: {self.q}, PnL: {self.PnL}")
+        print(f"Mid Price: {self.price[self.timestep]}, Time: {self.timestep}, Inventory: {self.q}, PnL: {self.pnl}")
 
