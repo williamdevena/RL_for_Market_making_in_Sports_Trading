@@ -16,7 +16,7 @@ class SportsTradingEnvironment(gym.Env):
 
         # Define action and observation space
         # Assuming the action space is continuous with back and lay prices ranging from some reasonable range (e.g., 1.01 to 100)
-        self.action_space = gym.spaces.Box(low=1.01, high=100, shape=(2,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=0.0, high=1, shape=(2,), dtype=np.float32)
 
         # Observation: mid-price and timestep
         self.observation_space = gym.spaces.Box(low=np.array([0, 0]), high=np.array([100, 1000]), dtype=np.float32)
@@ -62,7 +62,7 @@ class SportsTradingEnvironment(gym.Env):
     def calculate_cash_out(self, stake, odds, current_odds):
         current_stake = ((odds+1)*stake)/(current_odds+1)
         cash_out = (stake*odds) - (current_stake*current_odds)
-        #print(cash_out)
+
         return cash_out
 
 
@@ -104,7 +104,9 @@ class SportsTradingEnvironment(gym.Env):
 
     def step(self, action):
         # Action: [back_price, lay_price]
-        rb, rl = action
+        spread_b, spread_l = action
+        rb = self.price[self.timestep] + spread_b
+        rl = self.price[self.timestep] - spread_l
         # Simulate order book using Avellaneda-Stoikov framework and check if back and lay orders are filled
         dNb, dNl = self.avellaneda_stoikov_framework_step(rb=rb, rl=rl, price=self.price[self.timestep])
         self.update_inventory(dNb=dNb, dNl=dNl, rb=rb, rl=rl)
@@ -131,5 +133,5 @@ class SportsTradingEnvironment(gym.Env):
 
     def render(self, mode='human'):
         # For now, just print the current state. You can enhance this for better visualization later.
-        print(f"Mid Price: {self.price}, Time: {self.timestep}, Inventory: {self.q}, PnL: {self.PnL}")
+        print(f"Mid Price: {self.price[self.timestep]}, Time: {self.timestep}, Inventory: {self.q}, PnL: {self.PnL}")
 

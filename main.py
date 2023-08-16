@@ -262,23 +262,28 @@ def main():
     done = False
     #for x in range(200):
     while not done:
-        rb = env.price[env.timestep] + 0.2
-        rl = env.price[env.timestep] - 0.2
+        # rb = env.price[env.timestep] + 0.2
+        # rl = env.price[env.timestep] - 0.2
+        #action = (rb, rl)
+
+        action = env.action_space.sample()
+        rb = env.price[env.timestep] + action[0]
+        rl = env.price[env.timestep] - action[1]
+
         back_prices.append(rb)
         lay_prices.append(rl)
-        action = (rb, rl)
 
         [price, _], pnl, done = env.step(action=action)
         pnl_list.append(pnl)
         prices.append(price)
         inventory.append(env.q['stake'])
 
-    # plt.plot(prices)
-    # plt.plot(back_prices)
-    # plt.plot(lay_prices)
+    plt.plot(prices)
+    plt.plot(back_prices)
+    plt.plot(lay_prices)
 
     #plt.plot(pnl_list)
-    plt.plot(inventory)
+    #plt.plot(inventory)
 
     plt.show()
 
