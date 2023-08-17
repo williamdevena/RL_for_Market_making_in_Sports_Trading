@@ -14,17 +14,11 @@ class SportsTradingEnvironment(gym.Env):
         self.a_s = a_s
         self.b_s = b_s
 
-        possible_discrete_offsets = np.arange(0.0, 1.0, 0.1)
-
-        # self.action_space = gym.spaces.Box(low=0.0, high=1, shape=(2,), dtype=np.float32)
-        #self.action_space = gym.spaces.MultiDiscrete([10, 10])
         self.action_space = gym.spaces.Discrete(100)
 
-        # Observation: inventory and timestep
-        #self.observation_space = gym.spaces.Box(low=np.array([0, 0]), high=np.array([200, 500]), dtype=np.float32)
-
         ## normalized (inv.stake, inv.odds, timestep)
-        self.observation_space = gym.spaces.Box(low=np.array([0, 0, 0]), high=np.array([1, 1, 1]), dtype=np.float32)
+        ### we have to NORMALIZE!!!!!!!!!
+        self.observation_space = gym.spaces.Box(low=np.array([-50, 0, 0]), high=np.array([50, 100, 1000]), dtype=np.float32)
 
 
         # Initialize state variables
@@ -41,6 +35,8 @@ class SportsTradingEnvironment(gym.Env):
         self.list_pnl = []
         self.list_inventory_stake = []
         self.list_inventory_odds = []
+        self.back_offsets = []
+        self.lay_offsets = []
 
         ### AS framework parameters
         self.k = k
@@ -118,26 +114,14 @@ class SportsTradingEnvironment(gym.Env):
         # Decode the combined action into back and lay offsets
         back_offset = round((action // 10) * 0.1, 1)
         lay_offset = round((action % 10) * 0.1, 1)
-        #print(action, back_offset, lay_offset)
 
         return back_offset, lay_offset
 
 
     def step(self, action):
-        # # Convert to actual offset
-        # back_offset = action[0] * 0.1
-        # lay_offset = action[1] * 0.1
-        # rb = self.price[self.timestep] + back_offset
-        # rl = self.price[self.timestep] - lay_offset
-
         back_offset, lay_offset = self.decode_action(action)
         rb = self.price[self.timestep] + back_offset
         rl = self.price[self.timestep] - lay_offset
-
-        # # Action: [back_price, lay_price]
-        # spread_b, spread_l = action
-        # rb = self.price[self.timestep] + spread_b
-        # rl = self.price[self.timestep] - spread_l
 
         # Simulate order book using Avellaneda-Stoikov framework and check if back and lay orders are filled
         dNb, dNl = self.avellaneda_stoikov_framework_step(rb=rb, rl=rl, price=self.price[self.timestep])
@@ -153,6 +137,8 @@ class SportsTradingEnvironment(gym.Env):
 
         self.back_prices.append(rb)
         self.lay_prices.append(rl)
+        self.back_offsets.append(back_offset),
+        self.lay_offsets.append(lay_offset)
         self.list_inventory_stake.append(self.q['stake'])
         self.list_inventory_odds.append(self.q['odds'])
         self.list_pnl.append(self.pnl)
@@ -170,6 +156,8 @@ class SportsTradingEnvironment(gym.Env):
         self.list_pnl = []
         self.back_prices = []
         self.lay_prices = []
+        self.back_offsets = []
+        self.lay_offsets = []
         self.list_inventory_odds = []
         self.list_inventory_stake = []
 
@@ -177,6 +165,5 @@ class SportsTradingEnvironment(gym.Env):
 
 
     def render(self, mode='human'):
-        # For now, just print the current state. You can enhance this for better visualization later.
         print(f"Mid Price: {self.price[self.timestep]}, Time: {self.timestep}, Inventory: {self.q}, PnL: {self.pnl}")
 
