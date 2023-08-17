@@ -34,32 +34,6 @@ def main():
     random.seed(42)
 
 
-
-
-    # ## EXTRACT ORDER INTENSITIES AND VOLUME RATES FOR LOB SIMULATION
-    # price_file_path = os.path.join(data_directory, "djokovic_match_odds/29/32060431/1.209205488.bz2")
-    # id_runner = 2249229
-
-    # inplay_idx = pricefileutils.get_idx_first_inplay_mb_from_prices_file(price_file_path)
-    # market_books = betfairutil.read_prices_file(price_file_path)
-    # inplay_mbs = market_books[inplay_idx:]
-
-    # dict_rates_back, dict_rates_lay = data_processing.extract_orders_rates_for_lob_simulation(market_books=inplay_mbs,
-    #                                                         id_runner=id_runner)
-
-    # for name_rate, rate in dict_rates_back.items():
-    #     print(f"{name_rate}: {rate}\n")
-
-    # for name_rate, rate in dict_rates_lay.items():
-    #     print(f"{name_rate}: {rate}\n")
-
-
-
-
-
-
-
-
     # ## TENNIS MARKOV SIMULATOR
     # s = 0.5
     # t = 0.5
@@ -169,6 +143,7 @@ def main():
 
 
 
+
     ### TESTING STRATEGIES
     # strategy = FixedOffsetStrategy(offset=0.2)
     # plot_path = "./plots/fixed_02"
@@ -215,6 +190,17 @@ def main():
     # plotting.plot_results_of_all_strategies_test(results_path="./plots",
     #                                              strategies_names_list=strategy_names,
     #                                              metrics_list=metrics)
+
+
+
+
+
+
+
+    #### TESTING CAH OUT MECHANISM (PNL CALCULATION)
+    framework = AvellanedaStoikovFramework()
+    cashout = framework.calculate_cash_out(stake=-33.3, odds=-1.1, current_odds=1.01)
+    print(cashout)
 
 
 
@@ -281,7 +267,6 @@ def main():
 
     ### TEST STABLE-BASELINES
 
-
     ### EXAMPLE TRAIN ON CARTPOLE
     # import gymnasium as gym
     # from stable_baselines3 import DQN
@@ -298,36 +283,44 @@ def main():
 
 
 
-    ### TRAIN
-    import gymnasium as gym
-    from stable_baselines3 import DQN, PPO
 
-    from environments.gym_env.tensorboardCallback import TensorboardCallback
 
-    # # env = gym.make("CartPole-v1", render_mode="human")
-    a_s = 0.65
-    b_s = 0.65
-    k = 10
-    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
-                                                            b_s=b_s,
-                                                            k=k)
 
-    #callback = TensorboardCallback(verbose=1)
-    #print(dir(TensorboardCallback))
+    # ### TRAIN
+    # import gymnasium as gym
+    # from stable_baselines3 import DQN, PPO
+
+    # from environments.gym_env.tensorboardCallback import TensorboardCallback
+
+    # # # env = gym.make("CartPole-v1", render_mode="human")
+    # a_s = 0.65
+    # b_s = 0.65
+    # k = 10
+    # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+    #                                                         b_s=b_s,
+    #                                                         k=k)
+
+    # #callback = TensorboardCallback(verbose=1)
+    # #print(dir(TensorboardCallback))
 
     # log_dir = "./test_log_dir"
     # model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
     #             #learning_starts=1000
     #             )
 
-    log_dir = "./test_log_dir"
-    model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
+    # print(model.replay_buffer.__dict__.keys())
+    # print(model.replay_buffer.observations)
+    # print(model.replay_buffer.buffer_size)
+    # print(model.replay_buffer.obs_shape)
 
-    model.learn(total_timesteps=1000000,
-                log_interval=1,
-                progress_bar=True,
-                #callback=callback
-                )
+    # log_dir = "./test_log_dir"
+    # model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
+
+    # model.learn(total_timesteps=1000000,
+    #             log_interval=100,
+    #             progress_bar=True,
+    #             #callback=callback
+    #             )
 
     # print(callback.training_env)
 

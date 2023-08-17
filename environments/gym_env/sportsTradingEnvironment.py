@@ -16,9 +16,9 @@ class SportsTradingEnvironment(gym.Env):
 
         self.action_space = gym.spaces.Discrete(100)
 
-        ## normalized (inv.stake, inv.odds, timestep)
+        ## normalized (inv.stake, inv.odd and price)
         ### we have to NORMALIZE!!!!!!!!!
-        self.observation_space = gym.spaces.Box(low=np.array([-50, 0, 0]), high=np.array([50, 100, 1000]), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([-50, -100, 1]), high=np.array([50, 100, 100]), dtype=np.float32)
 
 
         # Initialize state variables
@@ -144,7 +144,7 @@ class SportsTradingEnvironment(gym.Env):
         self.list_pnl.append(self.pnl)
 
         # Return the state, reward, done, and any additional info
-        return np.array([self.q['stake'], self.q['odds'], self.timestep], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
+        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep]], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
 
 
     def reset(self, seed=None):
@@ -161,7 +161,7 @@ class SportsTradingEnvironment(gym.Env):
         self.list_inventory_odds = []
         self.list_inventory_stake = []
 
-        return np.array([self.q['stake'], self.q['odds'], self.timestep], dtype=np.float32), {}
+        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep]], dtype=np.float32), {}
 
 
     def render(self, mode='human'):
