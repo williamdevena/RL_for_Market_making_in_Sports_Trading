@@ -22,17 +22,14 @@ from src import data_processing, plotting, testing
 from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 from strategy.fixedOffsetStrategy import FixedOffsetStrategy
 from strategy.randomStrategy import RandomStrategy
-from utils import pricefileutils
+from utils import pricefileutils, setup
 
 #import tennisim
 
 
 
 def main():
-    dotenv.load_dotenv()
-    data_directory = os.environ.get("DATA_DIRECTORY")
-    random.seed(42)
-
+    data_directory = setup.setup()
 
     # ## TENNIS MARKOV SIMULATOR
     # s = 0.5
@@ -197,10 +194,10 @@ def main():
 
 
 
-    #### TESTING CAH OUT MECHANISM (PNL CALCULATION)
-    framework = AvellanedaStoikovFramework()
-    cashout = framework.calculate_cash_out(stake=-33.3, odds=-1.1, current_odds=1.01)
-    print(cashout)
+    # #### TESTING CAH OUT MECHANISM (PNL CALCULATION)
+    # framework = AvellanedaStoikovFramework()
+    # cashout = framework.calculate_cash_out(stake=-33.3, odds=-1.1, current_odds=1.01)
+    # print(cashout)
 
 
 
@@ -286,27 +283,27 @@ def main():
 
 
 
-    # ### TRAIN
-    # import gymnasium as gym
-    # from stable_baselines3 import DQN, PPO
+    ### TRAIN
+    import gymnasium as gym
+    from stable_baselines3 import DQN, PPO
 
-    # from environments.gym_env.tensorboardCallback import TensorboardCallback
+    from environments.gym_env.tensorboardCallback import TensorboardCallback
 
-    # # # env = gym.make("CartPole-v1", render_mode="human")
-    # a_s = 0.65
-    # b_s = 0.65
-    # k = 10
-    # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
-    #                                                         b_s=b_s,
-    #                                                         k=k)
+    # # env = gym.make("CartPole-v1", render_mode="human")
+    a_s = 0.65
+    b_s = 0.65
+    k = 10
+    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+                                                            b_s=b_s,
+                                                            k=k)
 
-    # #callback = TensorboardCallback(verbose=1)
-    # #print(dir(TensorboardCallback))
+    #callback = TensorboardCallback(verbose=1)
+    #print(dir(TensorboardCallback))
 
-    # log_dir = "./test_log_dir"
-    # model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
-    #             #learning_starts=1000
-    #             )
+    log_dir = "./test_log_dir"
+    model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
+                #learning_starts=1000
+                )
 
     # print(model.replay_buffer.__dict__.keys())
     # print(model.replay_buffer.observations)
@@ -316,11 +313,11 @@ def main():
     # log_dir = "./test_log_dir"
     # model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
 
-    # model.learn(total_timesteps=1000000,
-    #             log_interval=100,
-    #             progress_bar=True,
-    #             #callback=callback
-    #             )
+    model.learn(total_timesteps=1000000,
+                log_interval=100,
+                progress_bar=True,
+                #callback=callback
+                )
 
     # print(callback.training_env)
 
