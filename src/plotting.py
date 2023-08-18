@@ -54,7 +54,8 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
         plt.ylabel('Frequency', fontsize=12)
         plt.legend()
         #plt.title(f"{title} of baseline models")
-        plt.savefig(f"./plots/{metric}_models",
+        metric_path = os.path.join(results_path, f"{metric}_models")
+        plt.savefig(metric_path,
                     bbox_inches='tight'
                     )
         # plt.show()

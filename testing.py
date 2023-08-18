@@ -20,38 +20,51 @@ from strategy.randomStrategy import RandomStrategy
 from utils import setup
 
 
-def test_rl_agent_all_combinations(model, num_simulations_per_combination, debug=False):
-    tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
-    k_range = range(3, 13)
+def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_path, debug=False):
+    # tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
+    # k_range = range(3, 13)
 
-    # tennis_probs = [0.60, 0.62]
-    # k_range = range(3, 5)
+    tennis_probs = [0.60, 0.62]
+    k_range = range(3, 5)
 
     possible_combinations = list(itertools.product(tennis_probs, tennis_probs, k_range))
 
-    list_final_pnl = []
+    final_pnl = []
+    mean_return = []
+    volatility_returns = []
+    min_pnl = []
+    max_pnl = []
+    sharpe_ratio = []
+    sortino_ratio = []
+    mean_inv_stake = []
     for a_s, b_s, k in alive_it(possible_combinations):
         env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
                                                                 b_s=b_s,
                                                                 k=k)
-        list_pnl = test_rl_agent_multiple_episods(num_episodes=num_simulations_per_combination,
+        sim_results = test_rl_agent_multiple_episods(num_episodes=num_simulations_per_combination,
                                        model=model,
                                        env=env,
                                        plotting=False)
 
-        list_final_pnl.extend(list_pnl)
-        # mean_return.extend(sim_results['mean_return'])
-        # volatility_returns.extend(sim_results['volatility'])
-        # min_pnl.extend(sim_results['min_pnl'])
-        # max_pnl.extend(sim_results['max_pnl'])
-        # sharpe_ratio.extend(sim_results['sharpe_ratio'])
-        # sortino_ratio.extend(sim_results['sortino_ratio'])
-        # mean_inv_stake.extend(sim_results['mean_inv_stake'])
+        final_pnl.extend(sim_results['final_pnl'])
+        mean_return.extend(sim_results['mean_return'])
+        volatility_returns.extend(sim_results['volatility'])
+        min_pnl.extend(sim_results['min_pnl'])
+        max_pnl.extend(sim_results['max_pnl'])
+        sharpe_ratio.extend(sim_results['sharpe_ratio'])
+        sortino_ratio.extend(sim_results['sortino_ratio'])
+        mean_inv_stake.extend(sim_results['mean_inv_stake'])
 
-    df_pnl = pd.DataFrame(list_final_pnl)
-    print(df_pnl.describe())
-    sns.histplot(list_final_pnl)
-    plt.show()
+    plotting.plot_results_of_single_strategy_test(plot_path=plot_path,
+                                                    dict_results={'final_pnl': final_pnl,
+                                                                'mean_return': mean_return,
+                                                                'volatility': volatility_returns,
+                                                                'min_pnl': min_pnl,
+                                                                'max_pnl': max_pnl,
+                                                                'sharpe_ratio': sharpe_ratio,
+                                                                'sortino_ratio': sortino_ratio,
+                                                                'mean_inv_stake': mean_inv_stake}
+                                                    )
 
 
 
@@ -87,10 +100,17 @@ def test_rl_agent_single_episode(model, env, debug=False):
 
 
 def test_rl_agent_multiple_episods(num_episodes, model, env, plotting=True, debug=False):
-    list_final_pnl = []
+    final_pnl = []
+    mean_return = []
+    volatility_returns = []
+    min_pnl = []
+    max_pnl = []
+    sharpe_ratio = []
+    sortino_ratio = []
+    mean_inv_stake = []
     #for episode in alive_it(range(num_episodes)):
     for episode in range(num_episodes):
-        obs, info = env.reset()
+        obs, _ = env.reset()
         terminated = False
         while not terminated:
             if model=="random":
@@ -101,33 +121,49 @@ def test_rl_agent_multiple_episods(num_episodes, model, env, plotting=True, debu
             if debug:
                 print(f"Obs: {obs}\nAction: {action}")
 
-        list_final_pnl.append(env.list_pnl[-1])
 
-        # f = plt.figure(figsize=(10, 10))
-        # f.add_subplot(2, 2, 1)
-        # plt.plot(env.price, label="mid-price")
-        # plt.plot(env.back_prices, label="mid-price")
-        # plt.plot(env.lay_prices, label="mid-price")
-        # plt.legend()
-        # f.add_subplot(2, 2, 2)
-        # plt.plot(env.back_offsets, label="back offset")
-        # plt.plot(env.lay_offsets, label="lay offset")
-        # plt.legend()
-        # f.add_subplot(2, 2, 3)
-        # plt.plot(env.list_pnl, label="PnL")
-        # plt.legend()
-        # f.add_subplot(2, 2, 4)
-        # plt.plot(env.list_inventory_stake, label="Stake")
-        # plt.plot(env.list_inventory_odds, label="Odds")
-        # plt.legend()
+        final_pnl.append(env.list_pnl[-1])
+        min_pnl.append(np.min(env.list_pnl))
+        max_pnl.append(np.max(env.list_pnl))
+
+        returns = np.diff(env.list_pnl, prepend=0)
+        std_returns = np.std(returns)
+        downside_std = np.nanstd(np.clip(returns, np.NINF, 0, out=None))
+        mean_ret = np.mean(returns)
+        mean_return.append(mean_ret)
+        volatility_returns.append(std_returns)
+
+        if mean_ret==0 or std_returns==0:
+            #print(mean_ret, std_returns)
+            sharpe_ratio.append(0)
+        else:
+            sharpe_ratio.append(mean_ret/std_returns)
+
+
+        if mean_ret==0 or downside_std==0:
+            #print(mean_ret, std_returns)
+            sortino_ratio.append(0)
+        else:
+            # if downside_std==0:
+            #     print(mean_ret, downside_std)
+            sortino_ratio.append(mean_ret/downside_std)
+
+        mean_inv_stake.append(np.mean(env.list_inventory_stake))
 
     if plotting:
-        df_pnl = pd.DataFrame(list_final_pnl)
+        df_pnl = pd.DataFrame(final_pnl)
         print(df_pnl.describe())
-        sns.histplot(list_final_pnl)
+        sns.histplot(final_pnl)
         plt.show()
 
-    return list_final_pnl
+    return {'final_pnl': final_pnl,
+            'mean_return': mean_return,
+            'volatility': volatility_returns,
+            'min_pnl': min_pnl,
+            'max_pnl': max_pnl,
+            'sharpe_ratio': sharpe_ratio,
+            'sortino_ratio': sortino_ratio,
+            'mean_inv_stake': mean_inv_stake,}
 
 
 
@@ -231,10 +267,32 @@ def main():
 
 
 
-    ### TEST ALL POSSIBLE ENV. COMBINATIONS
-    model = DQN.load("./model_weights/DQN_1")
-    test_rl_agent_all_combinations(model=model,
-                                   num_simulations_per_combination=100)
+    # ### TEST ALL POSSIBLE ENV. COMBINATIONS
+    # model = DQN.load("./model_weights/DQN_1")
+    # plot_path = "./test_plots_RL/DQN"
+    # test_rl_agent_all_combinations(model=model,
+    #                                num_simulations_per_combination=10,
+    #                                plot_path=plot_path)
+
+
+    #### PLOT FINAL PNL DISTRIBUTIONS OF MODELS IN SAME GRAPH
+    strategy_names = [ "DQN"]
+
+    metrics = [
+        "final_pnl",
+        "volatility",
+        "mean_return",
+        "min_pnl",
+        "max_pnl",
+        "sharpe_ratio",
+        "sortino_ratio",
+        "mean_inv_stake"
+        ]
+
+    plotting.plot_results_of_all_strategies_test(results_path="./test_plots_RL",
+                                                 strategies_names_list=strategy_names,
+                                                 metrics_list=metrics)
+
 
 
 
