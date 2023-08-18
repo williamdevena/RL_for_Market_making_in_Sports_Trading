@@ -1,3 +1,5 @@
+import os
+
 import gymnasium as gym
 from stable_baselines3 import DQN, PPO
 
@@ -7,16 +9,24 @@ from utils import setup
 
 
 def main():
-    ## VARIABLES
+    ## ENV VARIABLES
     a_s = 0.65
     b_s = 0.65
-    k = 10
-    log_dir = "./test_log_dir"
+    k = 7
+
+    ## TRAINING VARIABLES
+    total_timesteps = 1e+6
     lr = 1e-5
     learning_starts=50000
     exploration_fraction = 0.2
+    log_interval = 100
+
+    ## OTHER VARIABLES
+    log_dir = "./test_log_dir"
     saving_model = True
-    saving_path = "test_DQN"
+    saving_dir = "./model_weights"
+    saving_name = "DQN_1"
+    saving_path = os.path.join(saving_dir, saving_name)
     debug = False
 
 
@@ -25,8 +35,7 @@ def main():
                                                             b_s=b_s,
                                                             k=k)
     ## CALLBACK
-    #callback = TensorboardCallback(verbose=1)
-    #print(dir(TensorboardCallback))
+    callback = TensorboardCallback(verbose=1)
 
     ## MODEL
     model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
@@ -42,10 +51,10 @@ def main():
         print(model.replay_buffer.buffer_size)
         print(model.replay_buffer.obs_shape)
 
-    model.learn(total_timesteps=1000000,
-                log_interval=100,
+    model.learn(total_timesteps=total_timesteps,
+                log_interval=log_interval,
                 progress_bar=True,
-                #callback=callback
+                callback=callback
                 )
 
     if saving_model:
