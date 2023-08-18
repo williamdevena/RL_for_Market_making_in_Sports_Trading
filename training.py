@@ -22,7 +22,7 @@ def main():
     log_interval = 100
 
     ## OTHER VARIABLES
-    log_dir = "./test_log_dir"
+    log_dir = "./test_log_dir3"
     saving_model = True
     saving_dir = "./model_weights"
     saving_name = "DQN_1"

@@ -6,8 +6,7 @@
 starts_database*
 markov_sim.py
 main_old.py
-*.zip
-test_log_dir
+test_log_dir*
 test_log_dir/*
 cartpole_dir
 cartpole_dir/*
