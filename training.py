@@ -22,7 +22,7 @@ def main():
     log_interval = 100
 
     ## OTHER VARIABLES
-    log_dir = "./test_log_dir3"
+    log_dir = "./tb_log_dir"
     saving_model = True
     saving_dir = "./model_weights"
     saving_name = "DQN_1"
@@ -35,7 +35,9 @@ def main():
                                                             b_s=b_s,
                                                             k=k)
     ## CALLBACK
-    callback = TensorboardCallback(verbose=1)
+    callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': a_s,
+                                                                   'b_s': b_s,
+                                                                   'k': k})
 
     ## MODEL
     model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,

@@ -4,6 +4,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from alive_progress import alive_it
 from stable_baselines3 import DQN, PPO
@@ -17,6 +18,45 @@ from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 from strategy.fixedOffsetStrategy import FixedOffsetStrategy
 from strategy.randomStrategy import RandomStrategy
 from utils import setup
+
+
+def test_rl_agent_all_combinations(model, num_simulations_per_combination, debug=False):
+    tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
+    k_range = range(3, 13)
+
+    # tennis_probs = [0.60, 0.62]
+    # k_range = range(3, 5)
+
+    possible_combinations = list(itertools.product(tennis_probs, tennis_probs, k_range))
+
+    list_final_pnl = []
+    for a_s, b_s, k in alive_it(possible_combinations):
+        env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+                                                                b_s=b_s,
+                                                                k=k)
+        list_pnl = test_rl_agent_multiple_episods(num_episodes=num_simulations_per_combination,
+                                       model=model,
+                                       env=env,
+                                       plotting=False)
+
+        list_final_pnl.extend(list_pnl)
+        # mean_return.extend(sim_results['mean_return'])
+        # volatility_returns.extend(sim_results['volatility'])
+        # min_pnl.extend(sim_results['min_pnl'])
+        # max_pnl.extend(sim_results['max_pnl'])
+        # sharpe_ratio.extend(sim_results['sharpe_ratio'])
+        # sortino_ratio.extend(sim_results['sortino_ratio'])
+        # mean_inv_stake.extend(sim_results['mean_inv_stake'])
+
+    df_pnl = pd.DataFrame(list_final_pnl)
+    print(df_pnl.describe())
+    sns.histplot(list_final_pnl)
+    plt.show()
+
+
+
+
+
 
 
 def test_rl_agent_single_episode(model, env, debug=False):
@@ -46,9 +86,10 @@ def test_rl_agent_single_episode(model, env, debug=False):
 
 
 
-def test_rl_agent_multiple_episods(num_episodes, model, env, debug=False):
+def test_rl_agent_multiple_episods(num_episodes, model, env, plotting=True, debug=False):
     list_final_pnl = []
-    for episode in alive_it(range(num_episodes)):
+    #for episode in alive_it(range(num_episodes)):
+    for episode in range(num_episodes):
         obs, info = env.reset()
         terminated = False
         while not terminated:
@@ -80,8 +121,13 @@ def test_rl_agent_multiple_episods(num_episodes, model, env, debug=False):
         # plt.plot(env.list_inventory_odds, label="Odds")
         # plt.legend()
 
-    sns.histplot(list_final_pnl)
-    plt.show()
+    if plotting:
+        df_pnl = pd.DataFrame(list_final_pnl)
+        print(df_pnl.describe())
+        sns.histplot(list_final_pnl)
+        plt.show()
+
+    return list_final_pnl
 
 
 
@@ -171,17 +217,24 @@ def main():
 
 
     # ### TEST MULTIPLE EPISODES
-    # a_s = 0.65
+    # a_s = 0.8
     # b_s = 0.65
-    # k = 4
+    # k = 3
     # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
     #                                                         b_s=b_s,
     #                                                         k=k)
-    # model = DQN.load("test_DQN")
+    # model = DQN.load("./model_weights/DQN_1")
     # test_rl_agent_multiple_episods(num_episodes=100,
     #                                        model=model,
     #                                        env=env,
     #                                        debug=False)
+
+
+
+    ### TEST ALL POSSIBLE ENV. COMBINATIONS
+    model = DQN.load("./model_weights/DQN_1")
+    test_rl_agent_all_combinations(model=model,
+                                   num_simulations_per_combination=100)
 
 
 
