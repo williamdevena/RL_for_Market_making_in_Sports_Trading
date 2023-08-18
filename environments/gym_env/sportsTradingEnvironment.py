@@ -16,17 +16,23 @@ class SportsTradingEnvironment(gym.Env):
 
         self.action_space = gym.spaces.Discrete(100)
 
-        ## normalized (inv.stake, inv.odd and price)
+        ## normalized (inv.stake, inv.odd, price, momentum indicator)
         ### we have to NORMALIZE!!!!!!!!!
-        self.observation_space = gym.spaces.Box(low=np.array([-50, -100, 1]), high=np.array([50, 100, 100]), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([-50, -100, 1, -100]), high=np.array([50, 100, 100, 100]), dtype=np.float32)
 
 
         # Initialize state variables
         #self.mid_price = self.simulate_mid_price()
-        self.timestep = 0
+        # self.timestep = 0
+        self.MOMENTUM_WINDOW_SIZE = 30
+        self.STARTING_TIMESTEP = self.MOMENTUM_WINDOW_SIZE + 1
+
+
+        self.timestep = self.STARTING_TIMESTEP
         self.q = {"stake": 0, "odds": 0}  # St: stake, Ot: odds
         self.x = 0
         self.pnl = 0
+        self.momentum_indicator = 0
         self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
         self.price = self.simulate_mid_price()
         self.max_timestep = len(self.price)
@@ -37,6 +43,7 @@ class SportsTradingEnvironment(gym.Env):
         self.list_inventory_odds = []
         self.back_offsets = []
         self.lay_offsets = []
+        self.list_momentum_indicator = [0]*self.STARTING_TIMESTEP
 
         ### AS framework parameters
         self.k = k
@@ -132,6 +139,11 @@ class SportsTradingEnvironment(gym.Env):
         self.pnl = self.calculate_cash_out(stake=self.q["stake"],
                                             odds=self.q["odds"],
                                             current_odds=self.price[self.timestep])
+
+        ## momentum indicator
+        self.momentum_indicator = self.price[self.timestep] - self.price[self.timestep-self.MOMENTUM_WINDOW_SIZE]
+
+
         # Move to the next timestep
         self.timestep += 1
 
@@ -142,15 +154,17 @@ class SportsTradingEnvironment(gym.Env):
         self.list_inventory_stake.append(self.q['stake'])
         self.list_inventory_odds.append(self.q['odds'])
         self.list_pnl.append(self.pnl)
+        self.list_momentum_indicator.append(self.momentum_indicator)
 
         # Return the state, reward, done, and any additional info
-        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep]], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
+        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
 
 
     def reset(self, seed=None):
         self.price = self.simulate_mid_price()
         self.max_timestep = len(self.price)
-        self.timestep = 0
+        self.timestep = self.STARTING_TIMESTEP
+        self.momentum_indicator = 0
         self.q = {"stake": 0, "odds": 0}
         self.pnl = 0
         self.list_pnl = []
@@ -160,8 +174,9 @@ class SportsTradingEnvironment(gym.Env):
         self.lay_offsets = []
         self.list_inventory_odds = []
         self.list_inventory_stake = []
+        self.list_momentum_indicator = [0]*self.STARTING_TIMESTEP
 
-        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep]], dtype=np.float32), {}
+        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator], dtype=np.float32), {}
 
 
     def render(self, mode='human'):

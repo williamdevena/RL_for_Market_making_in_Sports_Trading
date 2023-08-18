@@ -18,11 +18,13 @@ from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
 from environments.gym_env import sportsTradingEnvironment
 #from environments.tennis_markov import tennisMarkovSimulator
 from environments.tennis_simulator import tennisSimulator
-from src import data_processing, plotting, testing
+from src import data_processing, plotting
 from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 from strategy.fixedOffsetStrategy import FixedOffsetStrategy
 from strategy.randomStrategy import RandomStrategy
 from utils import pricefileutils, setup
+
+from . import testing
 
 #import tennisim
 
@@ -141,23 +143,7 @@ def main():
 
 
 
-    ### TESTING STRATEGIES
-    # strategy = FixedOffsetStrategy(offset=0.2)
-    # plot_path = "./plots/fixed_02"
 
-    # strategy = FixedOffsetStrategy(offset=0.5)
-    # plot_path = "./plots/fixed_05"
-
-    # strategy = FixedOffsetStrategy(offset=0.8)
-    # plot_path = "./plots/fixed_08"
-
-    # strategy = RandomStrategy(range_offset=(0, 1))
-    # plot_path = "./plots/random"
-
-    # num_simulations_per_combination = 100
-    # testing.test_strategies(plot_path=plot_path,
-    #                         strategy=strategy,
-    #                         num_simulations_per_combination=num_simulations_per_combination)
 
 
 
@@ -194,7 +180,7 @@ def main():
 
 
 
-    # #### TESTING CAH OUT MECHANISM (PNL CALCULATION)
+    # #### TESTING CASH OUT MECHANISM (PNL CALCULATION)
     # framework = AvellanedaStoikovFramework()
     # cashout = framework.calculate_cash_out(stake=-33.3, odds=-1.1, current_odds=1.01)
     # print(cashout)
@@ -209,27 +195,25 @@ def main():
     # ### TESTING GYM ENVIRONMENT
     # a_s = 0.7
     # b_s = 0.7
-    # k = 7
+    # k = 10
     # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s, b_s=b_s, k=k)
 
     # # prices = []
     # # back_prices = []
     # # lay_prices = []
-    # pnl_list = []
-    # inventory = []
+    # # pnl_list = []
+    # # inventory = []
+
     # done = False
-    # #for x in range(200):
     # while not done:
     #     action = env.action_space.sample()
+    #     _, _, done, _, _ = env.step(action=action)
 
-    #     [_, _], pnl, done = env.step(action=action)
-    #     pnl_list.append(pnl)
-    #     #prices.append(price)
-    #     inventory.append(env.q['stake'])
-
-    # plt.plot(env.price)
-    # plt.plot(env.back_prices)
-    # plt.plot(env.lay_prices)
+    # plt.plot(env.price, label="Mid-price")
+    # plt.plot(env.list_momentum_indicator, label="Momentum indicator")
+    # # plt.plot(env.back_prices)
+    # # plt.plot(env.lay_prices)
+    # plt.legend()
     # plt.show()
     # plt.close()
 
@@ -250,11 +234,11 @@ def main():
     # a_s = 0.65
     # b_s = 0.65
     # k = 2
-
     # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
     #                                                         b_s=b_s,
     #                                                         k=k)
-    # # It will check your custom environment and output additional warnings if needed
+
+    # # It will check the custom environment and output additional warnings if needed
     # check_env(env)
 
 
@@ -262,8 +246,7 @@ def main():
 
 
 
-    ### TEST STABLE-BASELINES
-
+    ### TEST STABLE-BASELINES (CART POLE)
     ### EXAMPLE TRAIN ON CARTPOLE
     # import gymnasium as gym
     # from stable_baselines3 import DQN
@@ -283,135 +266,7 @@ def main():
 
 
 
-    ### TRAIN
-    import gymnasium as gym
-    from stable_baselines3 import DQN, PPO
 
-    from environments.gym_env.tensorboardCallback import TensorboardCallback
-
-    # # env = gym.make("CartPole-v1", render_mode="human")
-    a_s = 0.65
-    b_s = 0.65
-    k = 10
-    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
-                                                            b_s=b_s,
-                                                            k=k)
-
-    #callback = TensorboardCallback(verbose=1)
-    #print(dir(TensorboardCallback))
-
-    log_dir = "./test_log_dir"
-    model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
-                #learning_starts=1000
-                )
-
-    # print(model.replay_buffer.__dict__.keys())
-    # print(model.replay_buffer.observations)
-    # print(model.replay_buffer.buffer_size)
-    # print(model.replay_buffer.obs_shape)
-
-    # log_dir = "./test_log_dir"
-    # model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
-
-    model.learn(total_timesteps=1000000,
-                log_interval=100,
-                progress_bar=True,
-                #callback=callback
-                )
-
-    # print(callback.training_env)
-
-
-    # model.save("test_DQN")
-
-
-    ## TEST
-    # del model # remove to demonstrate saving and loading
-    # model = DQN.load("test_DQN")
-
-    # #print(env.reset())
-    # obs, info = env.reset()
-    # #prices = []
-    # terminated = False
-
-    # while not terminated:
-    #     #print(obs)
-    #     action, _states = model.predict(obs, deterministic=True)
-    #     #print(action)
-    #     obs, reward, terminated, truncated, info = env.step(action)
-
-    # # plt.plot(env.price, label="mid-price")
-    # # plt.plot(env.back_prices, label="back price")
-    # # plt.plot(env.lay_prices, label="lay price")
-    # # plt.legend()
-    # # print(len(env.price), len(env.back_prices), len(env.lay_prices))
-
-    # plt.plot(env.price, label="mid-price")
-    # plt.plot(env.list_pnl, label="PnL")
-    # plt.plot(env.list_inventory_stake, label="Stake")
-    # plt.plot(env.list_inventory_odds, label="Odds")
-    # plt.legend()
-
-    # plt.show()
-
-
-
-
-    # #### TEST MODEL ON ENV
-    # import gymnasium as gym
-    # from stable_baselines3 import DQN
-
-    # # # env = gym.make("CartPole-v1", render_mode="human")
-    # a_s = 0.65
-    # b_s = 0.65
-    # k = 7
-    # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
-    #                                                         b_s=b_s,
-    #                                                         k=k)
-
-    # #model = DQN.load("test_DQN")
-    # model = DQN("MlpPolicy", env, verbose=1)
-
-    # num_episodes = 2
-    # list_final_pnl = []
-    # for episode in alive_it(range(num_episodes)):
-    #     obs, info = env.reset()
-    #     terminated = False
-    #     while not terminated:
-    #         ## MODEL
-    #         action, _states = model.predict(obs, deterministic=True)
-    #         ## RANDOM
-    #         # action = env.action_space.sample()
-
-    #         print(obs, action)
-
-    #         #print(action)
-    #         obs, reward, terminated, truncated, info = env.step(action)
-    #     list_final_pnl.append(env.list_pnl[-1])
-
-    #     f = plt.figure(figsize=(10, 10))
-    #     f.add_subplot(2, 2, 1)
-    #     plt.plot(env.price, label="mid-price")
-    #     plt.plot(env.back_prices, label="mid-price")
-    #     plt.plot(env.lay_prices, label="mid-price")
-    #     plt.legend()
-    #     f.add_subplot(2, 2, 2)
-    #     plt.plot(env.back_offsets, label="back offset")
-    #     plt.plot(env.lay_offsets, label="lay offset")
-    #     plt.legend()
-    #     f.add_subplot(2, 2, 3)
-    #     plt.plot(env.list_pnl, label="PnL")
-    #     plt.legend()
-    #     f.add_subplot(2, 2, 4)
-    #     plt.plot(env.list_inventory_stake, label="Stake")
-    #     plt.plot(env.list_inventory_odds, label="Odds")
-    #     plt.legend()
-
-    # # mean_pnl = np.mean(list_final_pnl)
-    # # print(f"Mean pnl: {mean_pnl}")
-
-    # # plt.plot(list_final_pnl)
-    # plt.show()
 
 
 
