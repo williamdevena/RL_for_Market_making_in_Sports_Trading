@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from alive_progress import alive_it
 
-from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
+from baselines.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
 
 """
 High-frequency trading in a limit order book, Marco Avellaneda & Sasha Stoikov
@@ -192,17 +192,23 @@ class AvellanedaStoikovFramework():
                 #     min_q_held = q[n+1]
 
             final_pnl[i_sim] = pnl[-1]
-            #adj_pnl = np.where(pnl==0, 0.00001, pnl)
-            returns = np.diff(pnl, prepend=0)
-            #returns = np.insert(returns, 0, 0)
-            #print(returns)
-            #print([pnl[:5]])
+
+            #returns = np.diff(pnl, prepend=0)
+            pnl_series = pd.Series(pnl)
+            returns = pnl_series.pct_change()
+            returns = returns.replace(to_replace=[np.inf, np.NINF],
+                                      value=np.nan)
+            returns = returns.interpolate()
+            returns = returns.replace(np.nan, 0)
+
+            #print(returns[:])
+
             min_pnl[i_sim] = np.min(pnl)
             max_pnl[i_sim] = np.max(pnl)
 
             downside_std = np.nanstd(np.clip(returns, np.NINF, 0, out=None))
             mean_ret = np.mean(returns)
-            print(mean_ret)
+            #print(mean_ret)
             std_returns = np.std(returns)
             mean_return[i_sim] = mean_ret
             volatility_returns[i_sim] = std_returns

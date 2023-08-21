@@ -13,15 +13,15 @@ import seaborn as sns
 import tennisim
 from alive_progress import alive_it
 
+from baselines.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
+from baselines.fixedOffsetStrategy import FixedOffsetStrategy
+from baselines.randomStrategy import RandomStrategy
 from environments.avellaneda_stoikov.avellanedaStoikovFramework import \
     AvellanedaStoikovFramework
 from environments.gym_env import sportsTradingEnvironment
 #from environments.tennis_markov import tennisMarkovSimulator
 from environments.tennis_simulator import tennisSimulator
 from src import data_processing, plotting
-from strategy.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
-from strategy.fixedOffsetStrategy import FixedOffsetStrategy
-from strategy.randomStrategy import RandomStrategy
 from utils import pricefileutils, setup
 
 from . import testing

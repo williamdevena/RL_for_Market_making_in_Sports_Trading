@@ -10,3 +10,4 @@ test_log_dir*
 test_log_dir/*
 cartpole_dir
 cartpole_dir/*
+*log_dir*

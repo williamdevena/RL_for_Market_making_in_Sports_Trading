@@ -15,20 +15,20 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
         "mean_return": (-0.15, 0.15),
         "min_pnl": (-13, 0),
         "max_pnl": (0, 20),
-        "sharpe_ratio": (-0.5, 1),
-        "sortino_ratio": (-0.75, 1.7),
+        "sharpe_ratio": (-0.5, 0.8),
+        "sortino_ratio": (-0.75, 2.5),
         "mean_inv_stake": (-18, 13)
     }
 
     ylim_values = {
-        'final_pnl': (0, 1700),
+        'final_pnl': (0, 2000),
         "volatility": (0, 2500),
         "mean_return": (0, 1500),
         "min_pnl": (0, 2500),
         "max_pnl": (0, 3000),
-        "sharpe_ratio": (0, 1300),
-        "sortino_ratio": (0, 1500),
-        "mean_inv_stake": (0, 1800)
+        "sharpe_ratio": (0, 2000),
+        "sortino_ratio": (0, 2500),
+        "mean_inv_stake": (0, 2300)
     }
 
     #f, ax = plt.subplots(figsize=(7, 3))
@@ -36,6 +36,7 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
 
 
     for metric in metrics_list:
+        print(metric)
         plt.figure(figsize=(7, 3))
         for strategy in strategies_names_list:
             path = os.path.join(results_path, strategy, "result.pkl")
@@ -43,6 +44,7 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
                 dict_result = pickle.load(f)
                 data = [r for r in dict_result[metric]]
                 label = strategy.replace("_0", " 0.") + " offset"
+                print(len(data))
                 sns.histplot(data, label=label)
 
         # Set plot labels and title based on current metric, and fetch the respective xlim and ylim from the dictionaries
@@ -55,6 +57,7 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
         plt.legend()
         #plt.title(f"{title} of baseline models")
         metric_path = os.path.join(results_path, f"{metric}_models")
+        print(metric_path)
         plt.savefig(metric_path,
                     bbox_inches='tight'
                     )
