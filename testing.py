@@ -20,6 +20,55 @@ from src import plotting
 from utils import setup
 
 
+def test_correlations_state_vars_and_actions(model, mode, num_simul_per_combin):
+    if mode=="long":
+        tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
+        k_range = range(3, 13)
+    else:
+        tennis_probs = [0.60, 0.62]
+        k_range = range(3, 5)
+
+    possible_combinations = list(itertools.product(tennis_probs, tennis_probs, k_range))
+    list_corr_matrices = []
+
+    for a_s, b_s, k in alive_it(possible_combinations):
+        for x in range(num_simul_per_combin):
+            env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+                                                                    b_s=b_s,
+                                                                    k=k,
+                                                                    mode='testing')
+
+            dict_results = test_rl_agent_single_episode(model=model,
+                                        env=env,
+                                        debug=False,
+                                        plot_results=False)
+
+
+            # for x, i in dict_results.items():
+            #     print(len(i))
+
+            dict_results['price'] = dict_results['price'][:-1]
+
+            df_results = pd.DataFrame.from_dict(dict_results)
+            corr_matrix = df_results.corr()
+            list_corr_matrices.append(corr_matrix)
+
+    mean_matrix = np.nanmean(list_corr_matrices, axis=0)
+
+    mask = np.triu(mean_matrix)
+    f, ax = plt.subplots(figsize=(12, 9))
+    sns.heatmap(mean_matrix, square=False, annot=True, mask=mask,
+                xticklabels=[features for features, _ in dict_results.items()],
+                yticklabels=[features for features, _ in dict_results.items()],)
+    plt.show()
+    plt.close()
+
+
+
+
+
+
+
 def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_path, mode="long", debug=False):
     if mode=="long":
         tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
@@ -41,7 +90,8 @@ def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_
     for a_s, b_s, k in alive_it(possible_combinations):
         env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
                                                                 b_s=b_s,
-                                                                k=k)
+                                                                k=k,
+                                                                mode='testing')
         sim_results = test_rl_agent_multiple_episods(num_episodes=num_simulations_per_combination,
                                        model=model,
                                        env=env,
@@ -83,21 +133,46 @@ def test_rl_agent_single_episode(model, env, debug=False, plot_results=True):
         if debug:
             print(f"Obs: {obs}\nAction: {action}")
 
+    spread = [a+b for (a,b) in list(zip(env.back_offsets, env.lay_offsets))]
+
     if plot_results:
         f = plt.figure(figsize=(10, 10))
-        f.add_subplot(2, 1, 1)
+        f.add_subplot(2, 2, 1)
         plt.plot(env.price, label="mid-price")
         plt.plot(env.back_prices, label="back price")
         plt.plot(env.lay_prices, label="lay price")
         plt.legend()
+
+        f.add_subplot(2, 2, 2)
+        plt.plot(env.back_offsets, label="back offset")
+        plt.plot(env.lay_offsets, label="lay offset")
+        plt.plot(spread, label="spread")
+        plt.legend()
+
         #print(len(env.price), len(env.back_prices), len(env.lay_prices))
-        f.add_subplot(2, 1, 2)
+        f.add_subplot(2, 2, 3)
         #plt.plot(env.price, label="mid-price")
         plt.plot(env.list_pnl, label="PnL")
         plt.plot(env.list_inventory_stake, label="Stake")
         plt.plot(env.list_inventory_odds, label="Odds")
         plt.legend()
+
+        f.add_subplot(2, 2, 4)
+        #plt.plot(env.price, label="mid-price")
+        plt.plot(env.list_volatility_indicator, label="Volat. indicator")
+        plt.legend()
+
         plt.show()
+
+    return {'stake': env.list_inventory_stake,
+            'odds': env.list_inventory_odds,
+            'price': env.price,
+            'momentum': env.list_momentum_indicator,
+            'volatility': env.list_volatility_indicator,
+            'spread': spread,
+            'back_offset': env.back_offsets,
+            'lay_offset': env.lay_offsets}
+
 
 
 
@@ -288,16 +363,29 @@ def main():
     #                         num_simulations_per_combination=num_simulations_per_combination)
 
 
+
+
+
+
     # ### TEST RL ON SINGLE EPISODE
     # a_s = 0.65
     # b_s = 0.65
-    # k = 7
+    # k = 4
     # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
     #                                                         b_s=b_s,
-    #                                                         k=k)
-    # model = DQN.load("model_weights/DQN_1")
+    #                                                         k=k,
+    #                                                         mode='testing')
+    # #model = DQN.load("model_weights/DQN_4_with_vol_ind")
+    # #model = DQN.load("model_weights/DQN_5_with_vol_ind")
+    # #model = DQN.load("./model_weights/with_return_reward/DQN_1_return_reward")
+    # model = DQN.load("./model_weights/with_k_4/DQN_1_k_4")
+    # #model = DQN("MlpPolicy", env)
 
     # test_rl_agent_single_episode(model=model, env=env, debug=False, plot_results=True)
+
+
+
+
 
 
 
@@ -307,60 +395,145 @@ def main():
     # k = 7
     # env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
     #                                                         b_s=b_s,
-    #                                                         k=k)
-    # # model = DQN.load("./model_weights/DQN_2")
-    # # model = DQN.load("./model_weights/DQN_3")
-    # model = A2C.load("./model_weights/A2C_1")
+    #                                                         k=k,
+                                                            # mode='testing')
 
-    # test_rl_agent_multiple_episods(num_episodes=100,
+    # # # model = DQN.load("./model_weights/DQN_2")
+    # # # plot_path = "plots_RL_single/DQN_2"
+
+    # # # model = DQN.load("./model_weights/DQN_3")
+    # # # plot_path = "plots_RL_single/DQN_3"
+
+    # # # model = DQN.load("./model_weights/DQN_4_with_vol_ind")
+    # # # plot_path = "plots_RL_single/DQN_4_with_vol_ind"
+
+    # # # model = DQN.load("./model_weights/DQN_5_with_vol_ind")
+    # # # plot_path = "plots_RL_single/DQN_5_with_vol_ind"
+
+    # # # model = DQN.load("./model_weights/DQN_6_with_vol_ind")
+    # # # plot_path = "plots_RL_single/DQN_6_with_vol_ind"
+
+    # # model = DQN.load("./model_weights/with_return_reward/DQN_1_return_reward")
+    # # plot_path = "plots_RL_single/DQN_1_return_reward"
+
+    # # model = DQN.load("./model_weights/with_k_4/DQN_1_k_4")
+    # # plot_path = "plots_RL_single/DQN_1_k_4"
+
+    # # model = DQN.load("./model_weights/with_k_4_2/DQN_1_k_4")
+    # # plot_path = "plots_RL_single/DQN_1_k_4_2"
+
+    # model = DQN.load("./model_weights/DQN_with_k_2/DQN_1_k_2")
+    # plot_path = "plots_RL_single/DQN_1_k_2"
+
+    # # # model = A2C.load("./model_weights/A2C_1")
+    # # # plot_path = "plots_RL_single/A2C_1"
+
+    # test_rl_agent_multiple_episods(num_episodes=1000,
     #                                 model=model,
     #                                 env=env,
     #                                 plot_results=True,
-    #                                 plot_path="plots_RL_single/A2C_1",
+    #                                 plot_path=plot_path,
     #                                 debug=False)
 
 
 
-    # ### TEST ALL POSSIBLE ENV. COMBINATIONS
-    # # model = DQN.load("./model_weights/DQN_2")
-    # # plot_path = "./plots_RL/DQN_2"
 
-    # # model = DQN.load("./model_weights/DQN_3")
-    # # plot_path = "./plots_RL/DQN_3"
+
+
+
+
+
+
+
+    ## TEST ALL POSSIBLE ENV. COMBINATIONS
+
+    ### WITHOUT VOLATILITY INDICATOR
+    # model = DQN.load("./model_weights/DQN_2")
+    # plot_path = "./plots_RL/DQN_2"
+
+    # model = DQN.load("./model_weights/DQN_3")
+    # print(model.policy)
+    # plot_path = "./plots_RL/DQN_3"
 
     # model = A2C.load("./model_weights/A2C_1")
+    # # print(model.policy)
     # plot_path = "./plots_RL/A2C_1"
 
-    # plot_path = "./test_plots_RL_correct/DQN_1"
-    # test_rl_agent_all_combinations(model=model,
-    #                                num_simulations_per_combination=100,
-    #                                plot_path=plot_path,
-    #                                #mode="short",
-    #                                mode="long"
-    #                                )
+
+    ### WITH VOL. INDICATOR
+    # model_name = "DQN_4_with_vol_ind"
+    # model_name = "DQN_5_with_vol_ind"
+   # model_name = "DQN_6_with_vol_ind"
+    #model_name = "with_k_4/DQN_1_k_4"
+    #model_name = "with_k_4_2/DQN_1_k_4"
+    #model_name = "with_k_2/DQN_1_k_2"
+    #model_name = "random_env/DQN_1_random_env"
+    #model_name = "random_env/DQN_2_random_env"
+    model_name = "random_env/DQN_3_random_env_3500000_steps"
+
+    model = DQN.load(f"./model_weights/{model_name}")
 
 
-    ### PLOT FINAL PNL DISTRIBUTIONS OF MODELS IN SAME GRAPH
-    # strategy_names = [ "DQN_1"]
-    # results_path = "./plots_RL"
 
-    strategy_names = ["fixed_02", "random", "fixed_05", "fixed_08"]
-    results_path = "./plots"
+    # model_name = "PPO_1_with_vol_ind"
+    # model = PPO.load(f"./model_weights/{model_name}")
 
-    metrics = [
-        # "final_pnl",
-        "volatility",
-        # "mean_return",
-        # "min_pnl",
-        # #"max_pnl",
-        # "sharpe_ratio",
-        # "sortino_ratio",
-        # "mean_inv_stake"
-        ]
+    # model_name = "A2C_1_with_vol_ind"
+    # model = A2C.load(f"./model_weights/{model_name}")
 
-    plotting.plot_results_of_all_strategies_test(results_path=results_path,
-                                                 strategies_names_list=strategy_names,
-                                                 metrics_list=metrics)
+
+    plot_path = f"./plots_RL/{model_name}"
+    test_rl_agent_all_combinations(model=model,
+                                   num_simulations_per_combination=100,
+                                   plot_path=plot_path,
+                                   #mode="short",
+                                   mode="long"
+                                   )
+
+
+
+
+
+
+    # ### TESTING CORRELATIONS BETWEEN STATE VARIABLES AND ACTIONS (SPREADS)
+
+    # #model_name = "random_env/DQN_2_random_env"
+    # model_name = "random_env/DQN_3_random_env_3500000_steps"
+
+    # model = DQN.load(f"./model_weights/{model_name}")
+
+    # test_correlations_state_vars_and_actions(model=model, mode='long',
+    #                                          num_simul_per_combin=10)
+
+
+
+
+
+
+
+
+
+    # ### PLOT FINAL PNL DISTRIBUTIONS OF MODELS IN SAME GRAPH
+    # # strategy_names = [ "DQN_2", "DQN_3", "A2C_1"]
+    # # results_path = "./plots_RL"
+
+    # strategy_names = ["fixed_02", "random", "fixed_05", "fixed_08"]
+    # results_path = "./plots"
+
+    # metrics = [
+    #     # "final_pnl",
+    #     "volatility",
+    #     "mean_return",
+    #     # "min_pnl",
+    #     # "max_pnl",
+    #     # "sharpe_ratio",
+    #     # "sortino_ratio",
+    #     # "mean_inv_stake"
+    #     ]
+
+    # plotting.plot_results_of_all_strategies_test(results_path=results_path,
+    #                                              strategies_names_list=strategy_names,
+    #                                              metrics_list=metrics)
 
 
 

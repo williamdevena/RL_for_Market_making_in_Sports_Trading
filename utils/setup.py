@@ -3,6 +3,7 @@ import random
 
 import dotenv
 import numpy as np
+import tensorflow as tf
 import torch
 
 
@@ -20,3 +21,5 @@ def set_random_seeds():
     random.seed(SEED)
     torch.manual_seed(SEED)
     np.random.seed(SEED)
+    tf.random.set_seed(SEED)
+    os.environ["PYTHONHASHSEED"] = str(SEED)

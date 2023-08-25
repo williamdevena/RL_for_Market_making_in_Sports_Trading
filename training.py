@@ -2,6 +2,7 @@ import os
 
 import gymnasium as gym
 from stable_baselines3 import A2C, DQN, PPO
+from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
 
 from environments.gym_env import sportsTradingEnvironment
@@ -11,40 +12,54 @@ from utils import setup
 
 def main():
     ## ENV VARIABLES
-    a_s = 0.65
-    b_s = 0.65
-    k = 7
+    # a_s = 0.65
+    # b_s = 0.65
+    #k = 2
 
     ## TRAINING VARIABLES
-    total_timesteps = 2e+6
-    lr = 1e-6
+    total_timesteps = 10e+6
+    exploration_fraction = 0.01
+    # total_timesteps = 1e+6
+    # exploration_fraction = 0.1
+
+    lr = 1e-5
     learning_starts = 50000
-    exploration_fraction = 0.1
-    log_interval = 100
+
+    log_interval = 1000
+    #log_interval = 1
+
+    save_freq = 500000
 
     ## OTHER VARIABLES
-    log_dir = "./tb_log_dir"
+    log_dir = "./tb_log_dir_random_env"
     saving_model = True
-    saving_dir = "./model_weights"
-    #saving_name = "DQN_3"
-    saving_name = "A2C_2"
+    saving_dir = "./model_weights/random_env/A2C"
+    saving_name = "A2C_1_random_env"
     saving_path = os.path.join(saving_dir, saving_name)
-    debug = False
+    debug = True
 
 
     # ## ENVIRONMENT
-    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
-                                                            b_s=b_s,
-                                                            k=k)
-    # Parallel environments
-    #vec_env = make_vec_env("CartPole-v1", n_envs=4)
-
-
+    env = sportsTradingEnvironment.SportsTradingEnvironment(
+                                                            # a_s=a_s,
+                                                            # b_s=b_s,
+                                                            # k=k
+                                                            )
 
     ## CALLBACK
-    callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': a_s,
-                                                                'b_s': b_s,
-                                                                'k': k})
+    custom_callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': 'random_changing',
+                                                                    'b_s': 'random_changing',
+                                                                    'k': 'random_changing',
+                                                                    'model_save_path': saving_path})
+    # Save a checkpoint every X steps
+    checkpoint_callback = CheckpointCallback(
+        save_freq=save_freq,
+        save_path=saving_dir,
+        name_prefix=saving_name,
+        save_replay_buffer=True,
+        save_vecnormalize=True,
+    )
+
 
     ## MODEL
     # model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
@@ -52,27 +67,19 @@ def main():
     #             learning_starts=learning_starts,
     #             exploration_fraction=exploration_fraction,
     #             )
-    # model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
+    #model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,)
     model = A2C("MlpPolicy",
-                #vec_env,
                 env,
                 verbose=1, tensorboard_log=log_dir,
-                # learning_rate=lr,
-                # learning_starts=learning_starts,
-                # exploration_fraction=exploration_fraction
                 )
 
     if debug:
-        # print(model.replay_buffer.__dict__.keys())
-        # print(model.replay_buffer.observations)
-        # print(model.replay_buffer.buffer_size)
-        # print(model.replay_buffer.obs_shape)
         print(model.policy)
 
     model.learn(total_timesteps=total_timesteps,
                 log_interval=log_interval,
                 progress_bar=True,
-                callback=callback
+                callback=[custom_callback, checkpoint_callback]
                 )
 
     if saving_model:

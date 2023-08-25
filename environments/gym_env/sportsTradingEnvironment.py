@@ -1,3 +1,4 @@
+import copy
 import math
 import random
 
@@ -9,44 +10,71 @@ from environments.tennis_simulator import tennisSimulator
 
 
 class SportsTradingEnvironment(gym.Env):
-    def __init__(self, a_s, b_s, k):
+    def __init__(self,
+                 mode='training',
+                 a_s=None,
+                 b_s=None,
+                 k=None
+                 ):
         super().__init__()
-        self.a_s = a_s
-        self.b_s = b_s
+        self.tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
+
+        if mode=='testing':
+            if a_s==None or b_s==None or k==None:
+                raise ValueError("When 'mode'=='testing' 'a_s', 'b_s' or 'k' can not be None")
+        elif mode=='training':
+            if not (a_s==None and b_s==None and k==None):
+                raise ValueError("When 'mode'=='training' 'a_s', 'b_s' and 'k' have to be None (they are not used)")
+        self.mode = mode
+
+        if self.mode=='testing':
+            self.a_s = a_s
+            self.b_s = b_s
+            self.k = k
+        elif self.mode=='training':
+            self.a_s = random.choice(self.tennis_probs)
+            self.b_s = random.choice(self.tennis_probs)
+            self.k = random.randint(3, 12)
+        else:
+            raise ValueError("Wrong 'mode' value")
+
+        self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
 
         self.action_space = gym.spaces.Discrete(100)
 
-        ## normalized (inv.stake, inv.odd, price, momentum indicator)
+        ## normalized (inv.stake, inv.odd, price, momentum indicator, volatility indicator)
         ### we have to NORMALIZE!!!!!!!!!
-        self.observation_space = gym.spaces.Box(low=np.array([-50, -100, 1, -100]), high=np.array([50, 100, 100, 100]), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([-50, -100, 1, -100, -100]), high=np.array([50, 100, 100, 100, 100]), dtype=np.float32)
 
 
         # Initialize state variables
         #self.mid_price = self.simulate_mid_price()
         # self.timestep = 0
-        self.MOMENTUM_WINDOW_SIZE = 30
+        self.MOMENTUM_WINDOW_SIZE = 15
         self.STARTING_TIMESTEP = self.MOMENTUM_WINDOW_SIZE + 1
-
+        self.VOLATILITY_WINDOW_SIZE = 15
 
         self.timestep = self.STARTING_TIMESTEP
         self.q = {"stake": 0, "odds": 0}  # St: stake, Ot: odds
         self.x = 0
         self.pnl = 0
         self.momentum_indicator = 0
-        self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
+        self.volatility_indicator = 0
         self.price = self.simulate_mid_price()
         self.max_timestep = len(self.price)
-        self.back_prices = []
-        self.lay_prices = []
-        self.list_pnl = []
-        self.list_inventory_stake = []
-        self.list_inventory_odds = []
-        self.back_offsets = []
-        self.lay_offsets = []
+        self.back_prices = [0]*self.STARTING_TIMESTEP
+        self.lay_prices = [0]*self.STARTING_TIMESTEP
+        self.list_pnl = [0]*self.STARTING_TIMESTEP
+        self.list_inventory_stake = [0]*self.STARTING_TIMESTEP
+        self.list_inventory_odds = [0]*self.STARTING_TIMESTEP
+        self.back_offsets = [0]*self.STARTING_TIMESTEP
+        self.lay_offsets = [0]*self.STARTING_TIMESTEP
         self.list_momentum_indicator = [0]*self.STARTING_TIMESTEP
+        self.list_volatility_indicator = [0]*self.STARTING_TIMESTEP
 
         ### AS framework parameters
-        self.k = k
+        #self.k = k
+
         self.dt = 0.01
         self.M = 0.5
         self.A = 1./self.dt/math.exp(self.k*self.M/2)
@@ -136,12 +164,18 @@ class SportsTradingEnvironment(gym.Env):
 
         ### Update Cash and PnL
         self.x = self.x - dNb + dNl
+        previous_pnl = copy.deepcopy(self.pnl)
         self.pnl = self.calculate_cash_out(stake=self.q["stake"],
                                             odds=self.q["odds"],
                                             current_odds=self.price[self.timestep])
+        pnl_return = self.pnl - previous_pnl
 
         ## momentum indicator
         self.momentum_indicator = self.price[self.timestep] - self.price[self.timestep-self.MOMENTUM_WINDOW_SIZE]
+
+        ## volatility indicator
+        prices_for_volatility = self.price[self.timestep-self.VOLATILITY_WINDOW_SIZE:self.timestep]
+        self.volatility_indicator = np.std(prices_for_volatility)
 
 
         # Move to the next timestep
@@ -155,28 +189,59 @@ class SportsTradingEnvironment(gym.Env):
         self.list_inventory_odds.append(self.q['odds'])
         self.list_pnl.append(self.pnl)
         self.list_momentum_indicator.append(self.momentum_indicator)
+        self.list_volatility_indicator.append(self.volatility_indicator)
+
+        # print(f"Previous pnl: {previous_pnl}\nPnl: {self.pnl}\nReturn: {pnl_return}")
+        # print("------------")
+
+        # if self.timestep==(self.max_timestep-1):
+        #     #print("finale")
+        #     print(self.list_pnl)
+        #     print(f"Sum: {sum(self.list_pnl)}")
+
+
+        # if self.timestep==(self.max_timestep-1):
+        #     reward = self.pnl
+        # else:
+        #     reward = pnl_return
+
+        reward = self.pnl
 
         # Return the state, reward, done, and any additional info
-        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
+        #return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator, self.volatility_indicator], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
+        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator, self.volatility_indicator], dtype=np.float32), reward, self.timestep >= self.max_timestep-1, False, {}
+
 
 
     def reset(self, seed=None):
+
+        if self.mode=='training':
+            self.a_s = random.choice(self.tennis_probs)
+            self.b_s = random.choice(self.tennis_probs)
+            self.k = random.randint(3, 12)
+            self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
+            self.A = 1./self.dt/math.exp(self.k*self.M/2)
+
         self.price = self.simulate_mid_price()
         self.max_timestep = len(self.price)
         self.timestep = self.STARTING_TIMESTEP
         self.momentum_indicator = 0
+        self.volatility_indicator = 0
         self.q = {"stake": 0, "odds": 0}
         self.pnl = 0
-        self.list_pnl = []
-        self.back_prices = []
-        self.lay_prices = []
-        self.back_offsets = []
-        self.lay_offsets = []
-        self.list_inventory_odds = []
-        self.list_inventory_stake = []
+        self.list_pnl = [0]*self.STARTING_TIMESTEP
+        self.back_prices = [0]*self.STARTING_TIMESTEP
+        self.lay_prices = [0]*self.STARTING_TIMESTEP
+        self.back_offsets = [0]*self.STARTING_TIMESTEP
+        self.lay_offsets = [0]*self.STARTING_TIMESTEP
+        self.list_inventory_odds = [0]*self.STARTING_TIMESTEP
+        self.list_inventory_stake = [0]*self.STARTING_TIMESTEP
         self.list_momentum_indicator = [0]*self.STARTING_TIMESTEP
+        self.list_volatility_indicator = [0]*self.STARTING_TIMESTEP
 
-        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator], dtype=np.float32), {}
+        #print(self.k, self.a_s, self.b_s)
+
+        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator, self.volatility_indicator], dtype=np.float32), {}
 
 
     def render(self, mode='human'):

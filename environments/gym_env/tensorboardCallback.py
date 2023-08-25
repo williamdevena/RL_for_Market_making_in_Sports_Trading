@@ -14,19 +14,12 @@ class TensorboardCallback(BaseCallback):
     def _on_training_start(self):
         #print(self.model.policy, self.training_env.observation_space, self.training_env.action_space)
         hparam_dict = {
-            #"algorithm": self.model.__class__.__name__,
-            #"total timesteps": self.model._total_timesteps,
+            'model_save_path': self.dict_env_params['model_save_path'],
             'a_s': self.dict_env_params['a_s'],
             'b_s': self.dict_env_params['b_s'],
             'k': self.dict_env_params['k'],
             "learning rate": self.model.learning_rate,
-            #"learning starts": self.model._num_timesteps_at_start,
-            #"exploration factor": self.model.,
-            #"gamma": self.model.gamma,
-            #"policy": str(self.model.policy),
             "Obs. space": str(self.training_env.observation_space),
-            #"Action space": str(self.training_env.action_space),
-            #"fufa": 2.34
         }
         # define the metrics that will appear in the `HPARAMS` Tensorboard tab by referencing their tag
         # Tensorbaord will find & display metrics from the `SCALARS` tab
@@ -44,3 +37,14 @@ class TensorboardCallback(BaseCallback):
 
     def _on_step(self):
         return True
+
+
+    def on_rollout_end(self):
+        self.logger.record("rollout/k", self.training_env.envs[0].env.k)
+        self.logger.record("rollout/a_s", self.training_env.envs[0].env.a_s)
+        self.logger.record("rollout/b_s", self.training_env.envs[0].env.b_s)
+        #print(self.training_env.__dict__)
+        #print(self.training_env.envs[0].env.k)
+
+
+
