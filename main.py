@@ -26,9 +26,6 @@ from utils import pricefileutils, setup
 
 from . import testing
 
-#import tennisim
-
-
 
 def main():
     data_directory = setup.setup()

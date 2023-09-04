@@ -79,7 +79,6 @@ def get_idx_first_inplay_mb_from_prices_file(
         #     pre_event_market_book = market_book
 
 
-
 def get_last_traded_prices_from_runner(runner_book):
     last_price = runner_book.get('lastPriceTraded', 0)
 
@@ -87,7 +86,6 @@ def get_last_traded_prices_from_runner(runner_book):
         return last_price
     else:
         return 0
-
 
 
 def get_name_match(price_file):

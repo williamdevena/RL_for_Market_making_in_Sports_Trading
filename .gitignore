@@ -12,3 +12,4 @@ cartpole_dir
 cartpole_dir/*
 *log_dir*
 model_weights*
+corr_matr_actions*

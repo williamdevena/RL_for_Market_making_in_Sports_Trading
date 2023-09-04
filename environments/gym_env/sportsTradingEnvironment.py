@@ -3,59 +3,89 @@ import math
 import random
 
 import gymnasium as gym
-#from gym import spaces
 import numpy as np
 
 from environments.tennis_simulator import tennisSimulator
 
 
 class SportsTradingEnvironment(gym.Env):
+    """
+    A custom Gymnasium environment for the simulation of a sports trading environment.
+    It is used to train and test RL agents. As every class that inherits from gym.Env
+    class, it has three main methods: 'step', 'reset' and 'render'. All the other methods
+    are of support to these.
+
+    Attributes:
+        mode (str): The mode of the environment ('fixed' or 'random').
+        a_s (float): Player A's probability of winning a point. Only used when mode is 'fixed'.
+        b_s (float): Player B's probability of winning a point. Only used when mode is 'fixed'.
+        k (int): Parameter for the Avellaneda-Stoikov framework. Only used when mode is 'fixed'.
+        tennis_probs (list): List of possible probabilities for tennis players.
+        action_space (gym.Space): The action space of the environment.
+        observation_space (gym.Space): The observation space of the environment.
+    """
     def __init__(self,
-                 mode='training',
+                 mode='random',
                  a_s=None,
                  b_s=None,
                  k=None
                  ):
+        """
+        Initializes the SportsTradingEnvironment object.
+
+        Args:
+            mode (str): The mode of the environment ('fixed' or 'random'). It is used to specify
+                if the environment has to be set on the 'fixed' mode, which means that the paramaters
+                'k', 'a_s' and 'b_s' are specified and remain fixed during the execution, or 'random',
+                which means that the environment randomly shuffles these three parameters during the
+                execution.
+            a_s (float, optional): Player A's probability of winning. Used by the Markov model, which
+                simulates the price time series of an episode. If 'mode'='random' it has to be None.
+            b_s (float, optional): Player B's probability of winning (same as 'a_s').
+            k (int, optional): Parameter for the Avellaneda-Stoikov (AS) framework, which simulates
+                the LOB environment. It represnts the liquidity of the market (a lower value means higher
+                liquidity).
+
+        Raises:
+            ValueError: If the `mode` argument is not set correctly.
+
+        """
         super().__init__()
         self.tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
 
-        if mode=='testing':
+        if mode=='fixed':
             if a_s==None or b_s==None or k==None:
-                raise ValueError("When 'mode'=='testing' 'a_s', 'b_s' or 'k' can not be None")
-        elif mode=='training':
+                raise ValueError("When 'mode'=='fixed' 'a_s', 'b_s' or 'k' can not be None")
+        elif mode=='random':
             if not (a_s==None and b_s==None and k==None):
-                raise ValueError("When 'mode'=='training' 'a_s', 'b_s' and 'k' have to be None (they are not used)")
+                raise ValueError("When 'mode'=='random' 'a_s', 'b_s' and 'k' have to be None (they are not used)")
         self.mode = mode
 
-        if self.mode=='testing':
+        if self.mode=='fixed':
             self.a_s = a_s
             self.b_s = b_s
             self.k = k
-        elif self.mode=='training':
+        elif self.mode=='random':
             self.a_s = random.choice(self.tennis_probs)
             self.b_s = random.choice(self.tennis_probs)
             self.k = random.randint(3, 12)
         else:
             raise ValueError("Wrong 'mode' value")
 
+        ## initialize the Markov model
         self.price_simulator = tennisSimulator.TennisMarkovSimulator(a_s=self.a_s, b_s=self.b_s)
-
+        ## Action space discrete from 0 to 100 (e.g. action 65 corresponds to back_offset=0.6 and lay_offset=0.5)
         self.action_space = gym.spaces.Discrete(100)
-
-        ## normalized (inv.stake, inv.odd, price, momentum indicator, volatility indicator)
-        ### we have to NORMALIZE!!!!!!!!!
+        ## inv.stake, inv.odd, price, momentum indicator, volatility indicator
         self.observation_space = gym.spaces.Box(low=np.array([-50, -100, 1, -100, -100]), high=np.array([50, 100, 100, 100, 100]), dtype=np.float32)
 
 
         # Initialize state variables
-        #self.mid_price = self.simulate_mid_price()
-        # self.timestep = 0
         self.MOMENTUM_WINDOW_SIZE = 15
         self.STARTING_TIMESTEP = self.MOMENTUM_WINDOW_SIZE + 1
         self.VOLATILITY_WINDOW_SIZE = 15
-
         self.timestep = self.STARTING_TIMESTEP
-        self.q = {"stake": 0, "odds": 0}  # St: stake, Ot: odds
+        self.q = {"stake": 0, "odds": 0}
         self.x = 0
         self.pnl = 0
         self.momentum_indicator = 0
@@ -71,23 +101,37 @@ class SportsTradingEnvironment(gym.Env):
         self.lay_offsets = [0]*self.STARTING_TIMESTEP
         self.list_momentum_indicator = [0]*self.STARTING_TIMESTEP
         self.list_volatility_indicator = [0]*self.STARTING_TIMESTEP
-
-        ### AS framework parameters
-        #self.k = k
-
         self.dt = 0.01
         self.M = 0.5
         self.A = 1./self.dt/math.exp(self.k*self.M/2)
 
 
-
     def simulate_mid_price(self):
+        """
+        Simulates and returns the mid-price time series using the Tennis Markov model
+        initialized in the init method.
+
+        Returns:
+            list: The simulated mid-price time series.
+
+        """
         _, price = self.price_simulator.simulate()
 
         return price
 
 
     def combine_bets(self, list_bets):
+        """
+        Combines multiple bets into a single bet with a new stake and odds. Used
+        to calculate the current inventory (stake and odds) when placing new bets.
+
+        Args:
+            list_bets (list): List of bets to combine.
+
+        Returns:
+            dict: A dictionary containing the new 'stake' and 'odds'.
+
+        """
         stake = sum([bet['stake'] for bet in list_bets])
 
         if stake==0:
@@ -102,6 +146,19 @@ class SportsTradingEnvironment(gym.Env):
 
 
     def calculate_cash_out(self, stake, odds, current_odds):
+        """
+        Calculates the cash-out value for a bet. Used to calculate
+        the current value of an inventory (betting position).
+
+        Args:
+            stake (float): The stake of the bet.
+            odds (float): The odds of the bet.
+            current_odds (float): The current odds.
+
+        Returns:
+            float: The cash-out value.
+
+        """
         current_stake = ((odds+1)*stake)/(current_odds+1)
         cash_out = (stake*odds) - (current_stake*current_odds)
 
@@ -109,6 +166,19 @@ class SportsTradingEnvironment(gym.Env):
 
 
     def avellaneda_stoikov_framework_step(self, rb, rl, price):
+        """
+        Simulates a step in the Avellaneda-Stoikov (AS) framework.
+
+        Args:
+            rb (float): The back price.
+            rl (float): The lay price.
+            price (float): The current mid-price.
+
+        Returns:
+            tuple: A tuple containing the number of back and lay orders
+                filled (0 or 1).
+
+        """
         # Reserve deltas
         delta_b = rb - price
         delta_l = price - rl
@@ -119,7 +189,7 @@ class SportsTradingEnvironment(gym.Env):
         yb = random.random()
         yl = random.random()
         ### Orders get filled or not?
-        prob_back = 1 - math.exp(-lambda_b*self.dt) # 1-exp(-lt) or just lt?
+        prob_back = 1 - math.exp(-lambda_b*self.dt)
         prob_lay = 1 - math.exp(-lambda_l*self.dt)
         dNb = 1 if yb < prob_back else 0
         dNl = 1 if yl < prob_lay else 0
@@ -128,6 +198,18 @@ class SportsTradingEnvironment(gym.Env):
 
 
     def update_inventory(self, dNb, dNl, rb, rl):
+        """
+        Updates the agent's inventory based on filled orders.
+
+        Args:
+            dNb (int): Number of back orders filled.
+            dNl (int): Number of lay orders filled.
+            rb (float): The back price.
+            rl (float): The lay price.
+
+        Returns: None
+
+        """
         if self.q=={'stake': 0, 'odds': 0}:
             if (dNb - dNl)==0:
                 self.q = self.q
@@ -146,7 +228,20 @@ class SportsTradingEnvironment(gym.Env):
 
 
     def decode_action(self, action):
-        # Decode the combined action into back and lay offsets
+        """
+        Decodes a combined action into back and lay offsets. The
+        actions have been defined as an integer between 0 and 100
+        and one integer contains both the back and lay offset chosen
+        by the agent (E.g. action=65 corresponds to back_offset=0.6
+        and lay_offset=0.5).
+
+        Args:
+            action (int): The combined action.
+
+        Returns:
+            tuple: A tuple containing the back and lay offsets.
+
+        """
         back_offset = round((action // 10) * 0.1, 1)
         lay_offset = round((action % 10) * 0.1, 1)
 
@@ -154,6 +249,16 @@ class SportsTradingEnvironment(gym.Env):
 
 
     def step(self, action):
+        """
+        Executes one time step within the environment.
+
+        Args:
+            action (int): The action taken by the agent.
+
+        Returns:
+            tuple: A tuple containing the new state, reward, done flag, and additional info.
+
+        """
         back_offset, lay_offset = self.decode_action(action)
         rb = self.price[self.timestep] + back_offset
         rl = self.price[self.timestep] - lay_offset
@@ -164,11 +269,9 @@ class SportsTradingEnvironment(gym.Env):
 
         ### Update Cash and PnL
         self.x = self.x - dNb + dNl
-        previous_pnl = copy.deepcopy(self.pnl)
         self.pnl = self.calculate_cash_out(stake=self.q["stake"],
                                             odds=self.q["odds"],
                                             current_odds=self.price[self.timestep])
-        pnl_return = self.pnl - previous_pnl
 
         ## momentum indicator
         self.momentum_indicator = self.price[self.timestep] - self.price[self.timestep-self.MOMENTUM_WINDOW_SIZE]
@@ -177,10 +280,8 @@ class SportsTradingEnvironment(gym.Env):
         prices_for_volatility = self.price[self.timestep-self.VOLATILITY_WINDOW_SIZE:self.timestep]
         self.volatility_indicator = np.std(prices_for_volatility)
 
-
         # Move to the next timestep
         self.timestep += 1
-
         self.back_prices.append(rb)
         self.lay_prices.append(rl)
         self.back_offsets.append(back_offset),
@@ -190,32 +291,25 @@ class SportsTradingEnvironment(gym.Env):
         self.list_pnl.append(self.pnl)
         self.list_momentum_indicator.append(self.momentum_indicator)
         self.list_volatility_indicator.append(self.volatility_indicator)
-
-        # print(f"Previous pnl: {previous_pnl}\nPnl: {self.pnl}\nReturn: {pnl_return}")
-        # print("------------")
-
-        # if self.timestep==(self.max_timestep-1):
-        #     #print("finale")
-        #     print(self.list_pnl)
-        #     print(f"Sum: {sum(self.list_pnl)}")
-
-
-        # if self.timestep==(self.max_timestep-1):
-        #     reward = self.pnl
-        # else:
-        #     reward = pnl_return
-
         reward = self.pnl
 
         # Return the state, reward, done, and any additional info
-        #return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator, self.volatility_indicator], dtype=np.float32), self.pnl, self.timestep >= self.max_timestep-1, False, {}
         return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator, self.volatility_indicator], dtype=np.float32), reward, self.timestep >= self.max_timestep-1, False, {}
 
 
 
     def reset(self, seed=None):
+        """
+        Resets the environment to its initial state.
 
-        if self.mode=='training':
+        Args:
+            seed (int, optional): The seed for random number generation. Defaults to None.
+
+        Returns:
+            tuple: A tuple containing the initial state and additional info.
+
+        """
+        if self.mode=='random':
             self.a_s = random.choice(self.tennis_probs)
             self.b_s = random.choice(self.tennis_probs)
             self.k = random.randint(3, 12)
@@ -239,11 +333,20 @@ class SportsTradingEnvironment(gym.Env):
         self.list_momentum_indicator = [0]*self.STARTING_TIMESTEP
         self.list_volatility_indicator = [0]*self.STARTING_TIMESTEP
 
-        #print(self.k, self.a_s, self.b_s)
-
-        return np.array([self.q['stake'], self.q['odds'], self.price[self.timestep], self.momentum_indicator, self.volatility_indicator], dtype=np.float32), {}
+        return np.array([self.q['stake'],
+                         self.q['odds'],
+                         self.price[self.timestep],
+                         self.momentum_indicator,
+                         self.volatility_indicator], dtype=np.float32), {}
 
 
     def render(self, mode='human'):
+        """
+        Renders the current state of the environment.
+
+        Args:
+            mode (str, optional): The mode for rendering. Defaults to 'human'.
+
+        """
         print(f"Mid Price: {self.price[self.timestep]}, Time: {self.timestep}, Inventory: {self.q}, PnL: {self.pnl}")
 

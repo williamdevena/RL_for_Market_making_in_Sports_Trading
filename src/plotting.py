@@ -1,8 +1,12 @@
+"""
+This module contains all the necessary functions to plot data generated in other modules.
+"""
 import os
 import pickle
 
 import dataframe_image
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -10,7 +14,7 @@ import seaborn as sns
 def plot_results_of_all_strategies_test(results_path, strategies_names_list, metrics_list):
     # Define the custom xlim and ylim for each metric.
     xlim_values = {
-        'final_pnl': (-16, 16),
+        'final_pnl': (-35, 35),
         "volatility": (0, 2),
         "mean_return": (-0.15, 0.15),
         "min_pnl": (-13, 0),
@@ -19,9 +23,9 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
         "sortino_ratio": (-0.75, 2.5),
         "mean_inv_stake": (-18, 13)
     }
-
     ylim_values = {
-        'final_pnl': (0, 2000),
+        'final_pnl': (0, 3000),
+        #'final_pnl': (0, 110),
         "volatility": (0, 2500),
         "mean_return": (0, 1500),
         "min_pnl": (0, 2500),
@@ -31,10 +35,6 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
         "mean_inv_stake": (0, 2300)
     }
 
-    #f, ax = plt.subplots(figsize=(7, 3))
-    #f.tight_layout()
-
-
     for metric in metrics_list:
         print(metric)
         plt.figure(figsize=(7, 3))
@@ -43,25 +43,21 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
             with open(path, 'rb') as f:
                 dict_result = pickle.load(f)
                 data = [r for r in dict_result[metric]]
-                label = strategy.replace("_0", " 0.") + " offset"
-                print(len(data))
-                sns.histplot(data, label=label)
-
-        # Set plot labels and title based on current metric, and fetch the respective xlim and ylim from the dictionaries
-
+                label = strategy.split("_")[0]
+                sns.histplot(data, label=label,
+                             bins=300
+                             )
         title = metric.replace("_", " ")
         plt.xlim(*xlim_values[metric])
         plt.ylim(*ylim_values[metric])
         plt.xlabel(f'{title}', fontsize=12)
         plt.ylabel('Frequency', fontsize=12)
-        plt.legend()
-        #plt.title(f"{title} of baseline models")
+        plt.legend(loc='upper right')
         metric_path = os.path.join(results_path, f"{metric}_models")
         print(metric_path)
         plt.savefig(metric_path,
                     bbox_inches='tight'
                     )
-        # plt.show()
         plt.close()
 
 

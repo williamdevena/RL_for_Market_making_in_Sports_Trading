@@ -1,3 +1,8 @@
+"""
+This module contains functions used to setup useful environment variables and the random seeds, at the beginning of each execution
+to ensure reproducibility.
+"""
+
 import os
 import random
 

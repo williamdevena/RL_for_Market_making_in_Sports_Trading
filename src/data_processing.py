@@ -132,14 +132,11 @@ def extract_orders_and_volumes_from_price_file(market_books, id_runner):
         list_volume_los = []
 
         for idx, mb in enumerate(market_books[:40000]):
-            # if idx<1000:
-            #         continue
             runner = [runner for runner in mb['runners'] if runner['selectionId']==id_runner][0]
             lob = runner['ex']
             lob_lay = lob[side_tuple[1]]
             traded_volume = lob['tradedVolume']
             update_list = mb['streaming_update']['rc']
-            #num_updates += 1
 
             lay_updates = [update for update in update_list if update['id']==id_runner and side_tuple[2] in update]
 

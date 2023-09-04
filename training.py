@@ -1,3 +1,7 @@
+"""
+This module executes the training of the RL agents.
+"""
+
 import os
 
 import gymnasium as gym
@@ -12,44 +16,48 @@ from utils import setup
 
 def main():
     ## ENV VARIABLES
-    # a_s = 0.65
-    # b_s = 0.65
-    #k = 2
+    a_s = 0.65
+    b_s = 0.65
+    k = 4
 
     ## TRAINING VARIABLES
-    total_timesteps = 10e+6
-    exploration_fraction = 0.01
+    total_timesteps = 8e+6
+    exploration_fraction = 0.0125
     # total_timesteps = 1e+6
     # exploration_fraction = 0.1
 
     lr = 1e-5
     learning_starts = 50000
 
-    log_interval = 1000
-    #log_interval = 1
+    ### A2C
+    #log_interval = 2000
+    ### DQN
+    #log_interval = 100
+    ### PPO
+    log_interval = 5
 
-    save_freq = 500000
+    save_freq = 250000
 
     ## OTHER VARIABLES
-    log_dir = "./tb_log_dir_random_env"
+    log_dir = "./tb_log_dir_k_4"
     saving_model = True
-    saving_dir = "./model_weights/random_env/A2C"
-    saving_name = "A2C_1_random_env"
+    saving_dir = "./model_weights/with_k_4/PPO"
+    saving_name = "PPO_3_k_4"
     saving_path = os.path.join(saving_dir, saving_name)
     debug = True
 
 
     # ## ENVIRONMENT
-    env = sportsTradingEnvironment.SportsTradingEnvironment(
-                                                            # a_s=a_s,
-                                                            # b_s=b_s,
-                                                            # k=k
+    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
+                                                            b_s=b_s,
+                                                            k=k,
+                                                            mode='fixed'
                                                             )
 
     ## CALLBACK
-    custom_callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': 'random_changing',
-                                                                    'b_s': 'random_changing',
-                                                                    'k': 'random_changing',
+    custom_callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': a_s,
+                                                                    'b_s': b_s,
+                                                                    'k': k,
                                                                     'model_save_path': saving_path})
     # Save a checkpoint every X steps
     checkpoint_callback = CheckpointCallback(
@@ -67,11 +75,8 @@ def main():
     #             learning_starts=learning_starts,
     #             exploration_fraction=exploration_fraction,
     #             )
-    #model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,)
-    model = A2C("MlpPolicy",
-                env,
-                verbose=1, tensorboard_log=log_dir,
-                )
+    model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
+    #model = A2C("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
 
     if debug:
         print(model.policy)
