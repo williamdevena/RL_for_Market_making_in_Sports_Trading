@@ -1,6 +1,7 @@
 """
 This module contains all the necessary functions to plot data generated in other modules.
 """
+import copy
 import os
 import pickle
 
@@ -9,6 +10,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
+
+def plot_correlation_matrix_state_actions(corr_matrix, plot_path, list_feature_names):
+    corr_matrix = corr_matrix[5:]
+    mask = copy.deepcopy(corr_matrix)
+    for i in range(len(mask)):
+        for j in range(len(mask[i])):
+            if j<(i+5):
+                mask[i][j] = 0
+
+    f, ax = plt.subplots(figsize=(10, 4))
+    sns.heatmap(corr_matrix, square=False, annot=True,
+                mask=mask,
+                xticklabels=[feature for feature, _ in list_feature_names
+                             if feature!='lay_offset'],
+                yticklabels=['spread', 'back_offset', 'lay_offset'],
+                vmin=-1,
+                vmax=1)
+    plt.savefig(plot_path)
+    plt.close()
+
 
 
 def plot_results_of_all_strategies_test(results_path, strategies_names_list, metrics_list):

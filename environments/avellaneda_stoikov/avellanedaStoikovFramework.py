@@ -10,8 +10,6 @@ import pandas as pd
 import seaborn as sns
 from alive_progress import alive_it
 
-from baselines.avellanedaStoikovStrategy import AvellanedaStoikovStrategy
-
 """
 High-frequency trading in a limit order book, Marco Avellaneda & Sasha Stoikov
 paper url: https://www.researchgate.net/publication/24086205_High_Frequency_Trading_in_a_Limit_Order_Book
