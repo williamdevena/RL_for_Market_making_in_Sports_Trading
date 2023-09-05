@@ -16,17 +16,10 @@ def main():
                                                             b_s=b_s,
                                                             k=k,
                                                             mode='fixed')
-    #model = DQN.load("model_weights/DQN_4_with_vol_ind")
-    #model = DQN.load("model_weights/DQN_5_with_vol_ind")
-    #model = DQN.load("./model_weights/with_return_reward/DQN_1_return_reward")
-    #model = DQN.load("./model_weights/with_k_4/DQN_1_k_4")
-    #model = DQN("MlpPolicy", env)
-
 
     #model = DQN.load("./model_weights/with_k_4/DQN/DQN_2_k_4")
     #model = PPO.load("./model_weights/with_k_4/PPO/PPO_2_k_4")
-    #model = A2C.load("./model_weights/with_k_4/A2C/A2C_2_k_4")
-    model = A2C.load("./model_weights/with_k_4/A2C/A2C_1_k_4")
+    model = A2C.load("./model_weights/with_k_4/A2C/A2C_2_k_4")
 
 
     #for x in range(10):

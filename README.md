@@ -30,10 +30,24 @@ cd RL_for_Market_making_in_Sports_Trading
 pip install -r requirements.txt
 </pre>
 
-
 ## Usage
 
-To use this project, you will need to...
+To run the code and conduct various experiments as outlined in the thesis, you can execute the following Python modules located in the main folder:
+
+- **`prices_simulation.py`**: Runs multiple simulations of a tennis match and plots the probability and odds time series for each match.
+
+- **`random_action_simulation.py`**: Runs a single event simulation using a random agent and plots various graphs, including state variables and PnL.
+
+- **`test_single_event.py`**: Executes a single event simulation with fixed environment parameters using a given trained RL agent, and plots relevant graphs.
+
+- **`test_multiple_events.py`**: Conducts multiple simulations using a given trained RL agent and plots distributions of risk and performance metrics like PnL, Sharpe ratio, etc.
+
+- **`test_all_combinations.py`**: Runs simulations on all possible combinations of environment parameters using a trained RL agent and plots distributions of various risk and performance metrics.
+
+- **`test_correlation_state_actions.py`**: Runs simulations on all possible combinations of environment parameters with a given trained RL agent, and calculates and saves plots of the mean correlation matrix between state variables and actions.
+
+Each module can be run with minimal to no modifications to execute parts of the experiments explained in the [thesis](<LINK TO YOUR THESIS>).
+
 
 ## Installation
 

@@ -28,3 +28,40 @@ def set_random_seeds():
     np.random.seed(SEED)
     tf.random.set_seed(SEED)
     os.environ["PYTHONHASHSEED"] = str(SEED)
+
+
+def setup_training_hyperparameters():
+    dict_hyperparameters = {
+        "DQN": {'a_s': 0.65,
+                'b_s': 0.65,
+                'k': 4,
+                'total_timesteps': 4e+6,
+                'exploration_fraction': 0.025,
+                'lr': 0.00001,
+                'learning_starts': 50000,
+                'log_interval': 100,
+                'save_freq': 250000,
+                },
+        "PPO": {'a_s': 0.65,
+                'b_s': 0.65,
+                'k': 4,
+                'total_timesteps': 4e+6,
+                'exploration_fraction': 0.025,
+                'lr': 0.0003,
+                'learning_starts': 50000,
+                'log_interval': 5,
+                'save_freq': 250000,
+                },
+        "A2C": {'a_s': 0.65,
+                'b_s': 0.65,
+                'k': 4,
+                'total_timesteps': 4e+6,
+                'exploration_fraction': 0.025,
+                'lr': 0.0007,
+                'learning_starts': 50000,
+                'log_interval': 2000,
+                'save_freq': 250000,
+                }
+    }
+
+    return dict_hyperparameters

@@ -14,54 +14,38 @@ from environments.gym_env.tensorboardCallback import TensorboardCallback
 from utils import setup
 
 
-def main():
-    ## ENV VARIABLES
-    a_s = 0.65
-    b_s = 0.65
-    k = 4
+def training(model_name, saving_model, debug, saving_dir, saving_name, log_dir):
+    hyperparams = setup.setup_training_hyperparameters()
 
-    ## TRAINING VARIABLES
-    total_timesteps = 8e+6
-    exploration_fraction = 0.0125
-    # total_timesteps = 1e+6
-    # exploration_fraction = 0.1
+    if model_name not in {"DQN", "PPO", "A2C"}:
+        raise ValueError(f"Invalid value {model_name} for 'model_name' variable, it must be either \"DQN\", \"PPO\" or \"A2C\".")
 
-    lr = 1e-5
-    learning_starts = 50000
-
-    ### A2C
-    #log_interval = 2000
-    ### DQN
-    #log_interval = 100
-    ### PPO
-    log_interval = 5
-
-    save_freq = 250000
+    dict_hyperparams = hyperparams[model_name]
 
     ## OTHER VARIABLES
-    log_dir = "./tb_log_dir_k_4"
-    saving_model = True
-    saving_dir = "./model_weights/with_k_4/PPO"
-    saving_name = "PPO_3_k_4"
+    # log_dir = "./tb_log_dir_k_4"
+    # saving_model = True
+    # saving_dir = f"./model_weights/{model_name}"
+    # saving_name = model_name + "_1"
     saving_path = os.path.join(saving_dir, saving_name)
-    debug = True
+    # debug = False
 
 
     # ## ENVIRONMENT
-    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=a_s,
-                                                            b_s=b_s,
-                                                            k=k,
+    env = sportsTradingEnvironment.SportsTradingEnvironment(a_s=dict_hyperparams['a_s'],
+                                                            b_s=dict_hyperparams['b_s'],
+                                                            k=dict_hyperparams['k'],
                                                             mode='fixed'
                                                             )
 
     ## CALLBACK
-    custom_callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': a_s,
-                                                                    'b_s': b_s,
-                                                                    'k': k,
+    custom_callback = TensorboardCallback(verbose=1, dict_env_params={'a_s': dict_hyperparams['a_s'],
+                                                                    'b_s': dict_hyperparams['b_s'],
+                                                                    'k': dict_hyperparams['k'],
                                                                     'model_save_path': saving_path})
     # Save a checkpoint every X steps
     checkpoint_callback = CheckpointCallback(
-        save_freq=save_freq,
+        save_freq=dict_hyperparams['save_freq'],
         save_path=saving_dir,
         name_prefix=saving_name,
         save_replay_buffer=True,
@@ -70,25 +54,64 @@ def main():
 
 
     ## MODEL
-    # model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_dir,
-    #             learning_rate=lr,
-    #             learning_starts=learning_starts,
-    #             exploration_fraction=exploration_fraction,
-    #             )
-    model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
-    #model = A2C("MlpPolicy", env, verbose=1, tensorboard_log=log_dir)
+    if model_name=="DQN":
+        model = DQN("MlpPolicy",
+                    env,
+                    verbose=1,
+                    tensorboard_log=log_dir,
+                    learning_rate=dict_hyperparams['lr'],
+                    learning_starts=dict_hyperparams['learning_starts'],
+                    exploration_fraction=dict_hyperparams['exploration_fraction'],
+                    )
+    elif model_name=="PPO":
+        model = PPO("MlpPolicy",
+                    env,
+                    verbose=1,
+                    tensorboard_log=log_dir,
+                    learning_rate=dict_hyperparams['lr'],
+                    learning_starts=dict_hyperparams['learning_start'],
+                    exploration_fraction=dict_hyperparams['exploration_fraction'],
+                    )
+    elif model_name=="A2C":
+        model = A2C("MlpPolicy",
+                    env,
+                    verbose=1,
+                    tensorboard_log=log_dir,
+                    learning_rate=dict_hyperparams['lr'],
+                    learning_starts=dict_hyperparams['learning_start'],
+                    exploration_fraction=dict_hyperparams['exploration_fraction'],)
+    else:
+        raise ValueError(f"Invalid value {model_name} for 'model_name' variable, it must be either \"DQN\", \"PPO\" or \"A2C\".")
 
     if debug:
         print(model.policy)
 
-    model.learn(total_timesteps=total_timesteps,
-                log_interval=log_interval,
+    model.learn(total_timesteps=dict_hyperparams['total_timesteps'],
+                log_interval=dict_hyperparams['log_interval'],
                 progress_bar=True,
                 callback=[custom_callback, checkpoint_callback]
                 )
 
     if saving_model:
         model.save(saving_path)
+
+
+
+
+def main():
+    model_name = "DQN"
+    saving_model = True
+    debug = True
+    saving_dir = "./model_weights_test"
+    saving_name = model_name
+    log_dir = "tb_log_dir_new_test"
+
+    training(model_name=model_name,
+             saving_model=saving_model,
+             debug=debug,
+             saving_dir=saving_dir,
+             saving_name=saving_name,
+             log_dir=log_dir)
 
 
 
