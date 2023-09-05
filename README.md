@@ -10,7 +10,7 @@ The thesis is divided in three key experiments (correspondent to Chapter 4, 5 an
 
 - **`In-depth analysis of sports exchange data`** ([other repo](https://github.com/williamdevena/Betfair_historical_data_exploration_and_analysis)): This experiment focuses on analysing the key features of sports exchange data like volumes, volatility, liquidity, and differences between pre-game and in-play data.
 
-- **`Implementation and testing of baseline models`**: It aims at evaluating baseline models to set a benchmark for market making in the sports market. A crucial part of this experiment includes the design of a novel framework for the simulation of a sports trading environment. In particular, the designed framework represents a version of the Avellaneda-Stoikov framework adapted to the sports trading market.
+- **`Implementation and testing of baseline models`**: It aims at evaluating baseline models to set a benchmark for market making in the sports market. A crucial part of this experiment includes the design of a novel framework for the simulation of a sports trading environment. In particular, the designed framework represents a version of the Avellaneda-Stoikov (AS) framework adapted to the sports trading market.
 
 - **`Development, training and testing of a novel RL agent`**: This last experiment has the objective of developing an agent, using state-of-the-art RL, with the aim of surpassing the performance of the baseline models. This experiments uses and evaluates three different RL algorithms (DQN, PPO and A2C) and evaluates the perfomance of the agents using several metrics, such as Profit and Loss (PnL), Sharpe Ratio, Sortino Ratio and others..
 
@@ -30,17 +30,20 @@ The repository is organized into several directories:
 
 - **`main directory`**: contains various modules designed to be run by the user to execute experiments, like training, testing and others (more details in section "Usage").
 
-- **`environments`**: This directory contains three subdirectories, `avellaneda_stoikov`, `gym_env` and `tennis_markov`, which contain Python modules for different models or environments used in the project.
+- **`environments`**: This directory contains two subdirectories, `gym_env` and `tennis_markov`.
 
-    - **`avellaneda_stoikov`**: Contains modules to simulate a variation of Avellaneda-Stoikov (AS) framework, adapted to the sport trading environment (the original one was designed to simulate a stocks trading environment). Used to test the baseline models.
+    <!-- - **`avellaneda_stoikov`**: Contains modules to simulate a variation of Avellaneda-Stoikov (AS) framework, adapted to the sport trading environment (the original one was designed to simulate a stocks trading environment). Used to test the baseline models. -->
 
-    - **`gym_env`**. Contains modules that regard the custom Gymnasium environment designed to train and tet RL agents, as well as baseline models (it substitutes the modules in `avellaneda_stoikov`).
+    - **`gym_env`**. Contains modules that regard the custom Gymnasium environment designed to train and test both the baseline models and the RL agents, including the variation of the AS framework.
+    <!-- It includes the code which implements the framework that simulates the sports trading environemnt. -->
 
-    - **`tennis_markov`**: Contains modules to calculate the probabilities in tennis matches, sets, games, and tiebreaks, using a Markov chain model. These modules are used to simulate the price time series of a tennis bet. The price time series that it simulates is used in conjunction with AS framework to simulate a trading environment in sport betting market (in both `gym_env` and `avellaneda_stoikov`).
+    - **`tennis_markov`**: Contains modules to calculate the probabilities in tennis matches, sets, games, and tiebreaks, using a Markov chain model. These modules are used to simulate the price time series of a tennis bet. The price time series that it simulates is then used by the Gymnasium environment.
 
 - **`src`**: This directory contains a module for data processing and plotting. The `data_processing.py` module involves cleaning, transforming, or otherwise preparing data for use in the project, while the `plotting.py` module contains functions to plot the data generated in other modules.
 
 - **`utils`**: This directory contains the `pricefileutils.py` module, which handles Betfair price files (used as datasets in this project), and a `setup.py` module used to setup environment variables and random seeds.
+
+- **`testing`**: This directory contains modules for testing functionalities.
 
 
 <!-- In addition, the repository contains two central modules: `training.py` and `testing.py`. These two modules execute the training and testing of different RL agents. -->
@@ -61,11 +64,22 @@ All the modules can be run with minimal to no modifications.
 
 ### Training RL agents
 
-To execute the training stage of the RL agents run **`training.py`**. To decide which type of agent to train (which RL algorithm), modify the `model_name` variable in the `training` function (choose between 'DQN', 'PPO' and 'A2C').
+To execute the training stage of the RL agents run the following command:
+<pre>
+python training.py
+</pre>
+
+To decide which type of agent to train (which RL algorithm), modify the `model_name` variable in the `training` function (choose between 'DQN', 'PPO' and 'A2C').
+
+#### Hyperparameters
+
+To ensure reproducibility, in addition to setting all the random seeds, the hyperparameters of the training have been recorder and are loaded by the **setup_training_hyperparameters** function in the **setup.py** module.
+
+These hyperparameters are laoded and used when the **training.py** is executed. To modify them just modfy their values in the **setup.py** module.
 
 #### Tensorboard logging
 
-The training function automatically logs the hyperparamters and useful metrics in Tensorboard. To visualize the Tensorboard UI during or after the training run the following command in your terminal:
+The training function automatically logs the hyperparameters and useful metrics in Tensorboard. To visualize the Tensorboard UI during or after the training run the following command in your terminal:
 <pre>
 tensorboard --logdir PATH_TO_LOG_DIR
 </pre>
