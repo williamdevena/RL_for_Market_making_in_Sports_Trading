@@ -1,3 +1,8 @@
+"""
+This module conducts multiple simulations (multiple matches) using a given trained RL agent
+and save plots of the distributions of risk and performance metrics like PnL, Sharpe ratio, etc.
+"""
+
 from stable_baselines3 import A2C, DQN, PPO
 
 from environments.gym_env import sportsTradingEnvironment

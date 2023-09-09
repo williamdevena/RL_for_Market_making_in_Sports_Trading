@@ -1,3 +1,8 @@
+"""
+This module executes a single event simulation with fixed environment parameters using
+a given trained RL agent, and plots relevant graphs.
+"""
+
 from stable_baselines3 import A2C, DQN, PPO
 
 from environments.gym_env import sportsTradingEnvironment

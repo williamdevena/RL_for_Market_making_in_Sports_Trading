@@ -15,6 +15,27 @@ from utils import setup
 
 
 def training(model_name, saving_model, debug, saving_dir, saving_name, log_dir):
+    """
+    Train a given RL model using specified hyperparameters and environment.
+
+    Args:
+        model_name (str): Name of the reinforcement learning model to be trained. Must be either "DQN", "PPO", or "A2C".
+        saving_model (bool): Flag indicating if the trained model should be saved.
+        debug (bool): If True, will print debug information.
+        saving_dir (str): Directory path where the trained model will be saved.
+        saving_name (str): Name for the trained model when saved.
+        log_dir (str): Directory path for tensorboard logging.
+
+    Returns:
+        None. Trains the model and saves it if `saving_model` is True.
+
+    Raises:
+        ValueError: If the provided `model_name` is not one of the allowed models ("DQN", "PPO", or "A2C").
+
+    Notes:
+        The function uses custom tensorboard callback for logging metrics and state.
+        It also uses a checkpoint callback to save model checkpoints periodically.
+    """
     hyperparams = setup.setup_training_hyperparameters()
 
     if model_name not in {"DQN", "PPO", "A2C"}:

@@ -1,3 +1,8 @@
+"""
+This module runs simulations on all possible combinations of environment parameters with a given trained RL
+agent, and calculates and saves plots of the mean correlation matrix between state variables and actions.
+"""
+
 from stable_baselines3 import A2C, DQN, PPO
 
 from testing import testing

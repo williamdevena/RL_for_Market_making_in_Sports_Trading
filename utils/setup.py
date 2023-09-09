@@ -13,6 +13,10 @@ import torch
 
 
 def setup():
+    """
+    Main setup function. Calls every other setup function needed.
+    Should be called at the beggining of each execution.
+    """
     dotenv.load_dotenv()
     data_directory = os.environ.get("DATA_DIRECTORY")
 
@@ -22,6 +26,9 @@ def setup():
 
 
 def set_random_seeds():
+    """
+    Sets the random seeds for reproducibility.
+    """
     SEED = 42
     random.seed(SEED)
     torch.manual_seed(SEED)
@@ -31,6 +38,13 @@ def set_random_seeds():
 
 
 def setup_training_hyperparameters():
+    """
+    Defines and returns the specified hyperparamters for the agent's training.
+
+    Returns:
+        dict_hyperparameters (dict): contains the hyperparaemters for each type
+            of agent.
+    """
     dict_hyperparameters = {
         "DQN": {'a_s': 0.65,
                 'b_s': 0.65,

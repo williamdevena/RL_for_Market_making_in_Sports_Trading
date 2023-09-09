@@ -1,3 +1,8 @@
+"""
+This module runs simulations on all possible combinations of environment parameters using a trained RL
+agent and save plots of the distributions of various risk and performance metrics.
+"""
+
 from stable_baselines3 import A2C, DQN, PPO
 
 from testing import testing

@@ -15,6 +15,21 @@ from src import plotting
 
 
 def test_correlations_state_vars_and_actions(model, mode, num_simul_per_combin, plot_path):
+    """
+    Test correlations (pearson and kendall correlations) between state variables and actions
+    using a given RL model. Used to analyse and undestrand the "logic" of the agents.
+
+    Args:
+        model: Trained RL model to be tested.
+        mode (str): Specifies the testing mode. Either "long" for comprehensive testing or
+                    any other value for shorter testing.
+        num_simul_per_combin (int): Number of simulations to run for each combination of
+                                    environment parameters.
+        plot_path (str): Path to save the plotted correlation matrices.
+
+    Returns:
+        None. However, correlation matrices plots are saved to the specified directory.
+    """
     if mode=="long":
         tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
         k_range = range(3, 13)
@@ -57,6 +72,20 @@ def test_correlations_state_vars_and_actions(model, mode, num_simul_per_combin, 
 
 
 def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_path, mode="long", debug=False):
+    """
+    Test an RL agent over all combinations of environment parameters ("All_comb" testing
+    procedure).
+
+    Args:
+        model: Trained RL model to be tested.
+        num_simulations_per_combination (int): Number of simulations for each combination.
+        plot_path (str): Path to save the plotted results.
+        mode (str, optional): Specifies the testing mode. Defaults to "long".
+        debug (bool, optional): If True, will print debug information. Defaults to False.
+
+    Returns:
+        None. Plots results of the test.
+    """
     if mode=="long":
         tennis_probs = [0.60, 0.62, 0.64, 0.66, 0.68, 0.70]
         k_range = range(3, 13)
@@ -106,6 +135,18 @@ def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_
 
 
 def test_rl_agent_single_episode(model, env, debug=False, plot_results=True):
+    """
+    Test an RL agent on a single episode.
+
+    Args:
+        model: Trained RL model to be tested.
+        env: Custom Gym environment for sports trading.
+        debug (bool, optional): If True, will print debug information. Defaults to False.
+        plot_results (bool, optional): If True, results will be plotted. Defaults to True.
+
+    Returns:
+        dict: Dictionary containing various metrics and series from the test.
+    """
     obs, info = env.reset()
     terminated = False
 
@@ -156,6 +197,20 @@ def test_rl_agent_single_episode(model, env, debug=False, plot_results=True):
 
 
 def test_rl_agent_multiple_episods(num_episodes, model, env, plot_results=True, plot_path=None, debug=False):
+    """
+    Test an RL agent over multiple episodes.
+
+    Args:
+        num_episodes (int): Number of episodes for the test.
+        model: Trained RL model or a predefined strategy ('random', 'fixed_02', 'fixed_05', 'fixed_08') to be tested.
+        env: Custom Gym environment for sports trading.
+        plot_results (bool, optional): If True, results will be plotted. Defaults to True.
+        plot_path (str, optional): Path to save the plotted results. Defaults to None.
+        debug (bool, optional): If True, will print debug information. Defaults to False.
+
+    Returns:
+        dict: Dictionary containing various aggregated metrics from the tests.
+    """
     final_pnl = []
     mean_return = []
     volatility_returns = []
