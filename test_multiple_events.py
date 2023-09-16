@@ -47,11 +47,8 @@ def main():
     # # model_name = "A2C_1_k_4"
     # # model = A2C.load(f"./model_weights/with_k_4/A2C/{model_name}")
 
-    # model_name = "A2C_2_k_4"
-    # model = A2C.load(f"./model_weights/with_k_4/A2C/{model_name}")
-
-    model_name = "PPO_3_k_4"
-    model = PPO.load(f"./model_weights/with_k_4/PPO/{model_name}")
+    model_name = "A2C_2_k_4"
+    model = A2C.load(f"./model_weights/with_k_4/A2C/{model_name}")
 
 
 

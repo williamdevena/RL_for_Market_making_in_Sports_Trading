@@ -11,6 +11,6 @@ test_log_dir/*
 cartpole_dir
 cartpole_dir/*
 *log_dir*
-model_weights*
+model_weights_*
 corr_matr_actions*
 old_testing.py
