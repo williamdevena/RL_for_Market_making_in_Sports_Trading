@@ -35,25 +35,19 @@ def main():
     # # plot_path = f"plots_k_4/{model}"
 
 
-    # # model_name = "PPO_2_k_4"
-    # # model = PPO.load(f"./model_weights/with_k_4/PPO/{model_name}")
+    # model_name = "PPO"
+    # model = PPO.load(f"./model_weights/{model_name}")
 
-    # # model_name = "DQN_1_k_4"
-    # # model = DQN.load(f"./model_weights/with_k_4/DQN/{model_name}")
+    # model_name = "DQN"
+    # model = DQN.load(f"./model_weights/{model_name}")
 
-    # # model_name = "DQN_2_k_4"
-    # # model = DQN.load(f"./model_weights/with_k_4/DQN/{model_name}")
-
-    # # model_name = "A2C_1_k_4"
-    # # model = A2C.load(f"./model_weights/with_k_4/A2C/{model_name}")
-
-    model_name = "A2C_2_k_4"
-    model = A2C.load(f"./model_weights/with_k_4/A2C/{model_name}")
+    model_name = "A2C"
+    model = A2C.load(f"./model_weights/{model_name}")
 
 
 
-    plot_path = f"plots_test_/{model_name}"
-    num_episodes = 100
+    plot_path = f"plots_test/{model_name}"
+    num_episodes = 10
     testing.test_rl_agent_multiple_episods(num_episodes=num_episodes,
                                             model=model,
                                             env=env,

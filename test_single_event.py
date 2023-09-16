@@ -22,9 +22,9 @@ def main():
                                                             k=k,
                                                             mode='fixed')
 
-    #model = DQN.load("./model_weights/with_k_4/DQN/DQN_2_k_4")
-    #model = PPO.load("./model_weights/with_k_4/PPO/PPO_2_k_4")
-    model = A2C.load("./model_weights/with_k_4/A2C/A2C_2_k_4")
+    #model = DQN.load("./model_weights/DQN)
+    #model = PPO.load("./model_weights/PPO")
+    model = A2C.load("./model_weights/A2C")
 
 
     #for x in range(10):
