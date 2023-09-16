@@ -49,11 +49,18 @@ The repository is organized into several directories:
 <!-- In addition, the repository contains two central modules: `training.py` and `testing.py`. These two modules execute the training and testing of different RL agents. -->
 
 ## Installation
-Use the following commands to clone the repository and install the necessary requirements:
+Use the following commands to clone the repository and install the necessary requirements using pip:
 <pre>
 git clone https://github.com/williamdevena/RL_for_Market_making_in_Sports_Trading.git
 cd RL_for_Market_making_in_Sports_Trading
 pip install -r requirements.txt
+</pre>
+Alternatively, if you prefer conda you can recreate the same environment used by the authors:
+<pre>
+git clone https://github.com/williamdevena/RL_for_Market_making_in_Sports_Trading.git
+cd RL_for_Market_making_in_Sports_Trading
+conda env create -f environment.yml
+conda activate RL_MM
 </pre>
 
 
