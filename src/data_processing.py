@@ -1,8 +1,9 @@
 import betfairutil
 import numpy as np
+from typing import Dict, List, Tuple
 
 
-def extract_orders_rates_for_lob_simulation(market_books, id_runner):
+def extract_orders_rates_for_lob_simulation(market_books: List[Dict], id_runner: int) -> Tuple[Dict, Dict]:
     """
     Extracts the orders and volumes from a list of market books, calculates order intensity rates (lambda) and order volume rates
     (alpha) for the simulation of a Limit Order Book (LOB) model, for both 'back' and 'lay' sides of the market.
@@ -30,8 +31,6 @@ def extract_orders_rates_for_lob_simulation(market_books, id_runner):
     publish_time_last_mb = market_books[-1]['publishTime']
     total_seconds = (publish_time_last_mb - publish_time_first_mb)/1000
 
-    print(total_seconds)
-
     dict_rates_back = calculate_orders_rates_for_lob_simulation(dict_extraction_results=dict_results['back'], total_seconds=total_seconds)
     dict_rates_lay = calculate_orders_rates_for_lob_simulation(dict_extraction_results=dict_results['lay'], total_seconds=total_seconds)
 
@@ -40,7 +39,7 @@ def extract_orders_rates_for_lob_simulation(market_books, id_runner):
 
 
 
-def calculate_orders_rates_for_lob_simulation(dict_extraction_results, total_seconds):
+def calculate_orders_rates_for_lob_simulation(dict_extraction_results: Dict, total_seconds: float) -> Dict:
     """
     Calculates the order intensity rates (lambda) and order volume rates (alpha) for market orders, limit orders,
     and cancellation orders. These parameters are used in the simulation of a Limit Order Book (LOB) model.
@@ -94,7 +93,7 @@ def calculate_orders_rates_for_lob_simulation(dict_extraction_results, total_sec
             "lamda_cos": lamda_cos}
 
 
-def extract_orders_and_volumes_from_price_file(market_books, id_runner):
+def extract_orders_and_volumes_from_price_file(market_books: List[Dict], id_runner: int) -> Dict:
     """
     Parses a list of market books to count different types of orders
     (Market orders, Limit orders, and Cancellation orders) and their volumes for

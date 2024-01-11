@@ -12,9 +12,16 @@ from alive_progress import alive_it
 sys.path.append("..")
 from environments.gym_env import sportsTradingEnvironment
 from src import plotting
+from typing import List, Tuple, Dict, Union
 
 
-def test_correlations_state_vars_and_actions(model, mode, num_simul_per_combin, plot_path):
+from stable_baselines3 import OnPolicyAlgorithm, OffPolicyAlgorithm
+
+
+def test_correlations_state_vars_and_actions(model: Union[OnPolicyAlgorithm, OffPolicyAlgorithm],
+                                             mode: str,
+                                             num_simul_per_combin: int,
+                                             plot_path: str) -> None:
     """
     Test correlations (pearson and kendall correlations) between state variables and actions
     using a given RL model. Used to analyse and undestrand the "logic" of the agents.
@@ -71,7 +78,11 @@ def test_correlations_state_vars_and_actions(model, mode, num_simul_per_combin, 
                                                    list_feature_names=dict_results.items())
 
 
-def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_path, mode="long", debug=False):
+def test_rl_agent_all_combinations(model: Union[OnPolicyAlgorithm, OffPolicyAlgorithm],
+                                   num_simulations_per_combination: int,
+                                   plot_path: str,
+                                   mode: str = "long",
+                                   debug: bool = False) -> None:
     """
     Test an RL agent over all combinations of environment parameters ("All_comb" testing
     procedure).
@@ -108,7 +119,7 @@ def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_
                                                                 b_s=b_s,
                                                                 k=k,
                                                                 mode='fixed')
-        sim_results = test_rl_agent_multiple_episods(num_episodes=num_simulations_per_combination,
+        sim_results = test_rl_agent_multiple_episodes(num_episodes=num_simulations_per_combination,
                                        model=model,
                                        env=env,
                                        plot_results=False)
@@ -134,7 +145,10 @@ def test_rl_agent_all_combinations(model, num_simulations_per_combination, plot_
                                                     )
 
 
-def test_rl_agent_single_episode(model, env, debug=False, plot_results=True):
+def test_rl_agent_single_episode(model: Union[OnPolicyAlgorithm, OffPolicyAlgorithm],
+                                 env: sportsTradingEnvironment,
+                                 debug: bool = False,
+                                 plot_results: bool = True) -> Dict[str, List[float]]:
     """
     Test an RL agent on a single episode.
 
@@ -196,7 +210,12 @@ def test_rl_agent_single_episode(model, env, debug=False, plot_results=True):
 
 
 
-def test_rl_agent_multiple_episods(num_episodes, model, env, plot_results=True, plot_path=None, debug=False):
+def test_rl_agent_multiple_episodes(num_episodes: int,
+                                    model: Union[OnPolicyAlgorithm, OffPolicyAlgorithm],
+                                    env: sportsTradingEnvironment,
+                                    plot_results: bool = True,
+                                    plot_path: str = None,
+                                    debug: bool = False) -> Dict[str, List[float]]:
     """
     Test an RL agent over multiple episodes.
 

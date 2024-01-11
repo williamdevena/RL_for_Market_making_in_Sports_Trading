@@ -10,7 +10,7 @@ from testing import testing
 from utils import setup
 
 
-def main():
+def main() -> None:
     _ = setup.setup()
 
     a_s = 0.65

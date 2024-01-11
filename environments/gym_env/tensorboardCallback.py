@@ -15,7 +15,7 @@ class TensorboardCallback(BaseCallback):
 
     """
 
-    def __init__(self, dict_env_params, verbose=0):
+    def __init__(self, dict_env_params: dict, verbose: int = 0) -> None:
         """
         Initializes the TensorboardCallback object.
 
@@ -27,7 +27,7 @@ class TensorboardCallback(BaseCallback):
         super().__init__(verbose)
         self.dict_env_params = dict_env_params
 
-    def _on_training_start(self):
+    def _on_training_start(self) -> None:
         """
         Logs hyperparameters to Tensorboard at the start of training.
 
@@ -50,7 +50,7 @@ class TensorboardCallback(BaseCallback):
             exclude=("stdout", "log", "json", "csv"),
         )
 
-    def _on_step(self):
+    def _on_step(self) -> bool:
         """Method to keep the callback API consistent.
 
         This method is automatically called at each step of training.
@@ -61,7 +61,7 @@ class TensorboardCallback(BaseCallback):
         return True
 
 
-    def on_rollout_end(self):
+    def on_rollout_end(self) -> None:
         """
         Logs environment parameters at the end of each rollout. It logs
         the three environment parameters: 'k', 'a_s' and 'b_s' (useful

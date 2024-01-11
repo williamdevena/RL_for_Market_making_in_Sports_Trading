@@ -5,7 +5,7 @@ from environments.gym_env import sportsTradingEnvironment
 from utils import setup
 
 
-def single_random_simulation(k, a_s, b_s):
+def single_random_simulation(k: int, a_s: float, b_s: float) -> None:
     """
     Executes a single simulation (one match) of the sports trading environment
     (SportsTrading Environment class) using random actions and plots state variables

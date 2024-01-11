@@ -5,7 +5,7 @@ from environments.tennis_simulator import tennisSimulator
 from utils import setup
 
 
-def price_simulations(a_s, b_s, num_simulations):
+def price_simulations(a_s: float, b_s: float, num_simulations: int) -> None:
     """
     Simulates and plots the probability and odds of winning a tennis match over time.
 

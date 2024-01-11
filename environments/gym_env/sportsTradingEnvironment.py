@@ -6,6 +6,7 @@ import gymnasium as gym
 import numpy as np
 
 from environments.tennis_simulator import tennisSimulator
+from typing import Optional, List, Tuple, Union, Dict
 
 
 class SportsTradingEnvironment(gym.Env):
@@ -25,11 +26,10 @@ class SportsTradingEnvironment(gym.Env):
         observation_space (gym.Space): The observation space of the environment.
     """
     def __init__(self,
-                 mode='random',
-                 a_s=None,
-                 b_s=None,
-                 k=None
-                 ):
+                 mode: str = 'random',
+                 a_s: Optional[float] = None,
+                 b_s: Optional[float] = None,
+                 k: Optional[int] = None) -> None:
         """
         Initializes the SportsTradingEnvironment object.
 
@@ -106,7 +106,7 @@ class SportsTradingEnvironment(gym.Env):
         self.A = 1./self.dt/math.exp(self.k*self.M/2)
 
 
-    def simulate_mid_price(self):
+    def simulate_mid_price(self) -> List[float]:
         """
         Simulates and returns the mid-price time series using the Tennis Markov model
         initialized in the init method.
@@ -120,7 +120,7 @@ class SportsTradingEnvironment(gym.Env):
         return price
 
 
-    def combine_bets(self, list_bets):
+    def combine_bets(self, list_bets: List[Dict[str, float]]) -> Dict[str, float]:
         """
         Combines multiple bets into a single bet with a new stake and odds. Used
         to calculate the current inventory (stake and odds) when placing new bets.
@@ -145,7 +145,7 @@ class SportsTradingEnvironment(gym.Env):
 
 
 
-    def calculate_cash_out(self, stake, odds, current_odds):
+    def calculate_cash_out(self, stake: float, odds: float, current_odds: float) -> float:
         """
         Calculates the cash-out value for a bet. Used to calculate
         the current value of an inventory (betting position).
@@ -165,7 +165,7 @@ class SportsTradingEnvironment(gym.Env):
         return cash_out
 
 
-    def avellaneda_stoikov_framework_step(self, rb, rl, price):
+    def avellaneda_stoikov_framework_step(self, rb: float, rl: float, price: float) -> Tuple[int, int]:
         """
         Simulates a step in the Avellaneda-Stoikov (AS) framework.
 
@@ -197,7 +197,7 @@ class SportsTradingEnvironment(gym.Env):
         return dNb, dNl
 
 
-    def update_inventory(self, dNb, dNl, rb, rl):
+    def update_inventory(self, dNb: int, dNl: int, rb: float, rl: float) -> None:
         """
         Updates the agent's inventory based on filled orders.
 
@@ -227,7 +227,7 @@ class SportsTradingEnvironment(gym.Env):
 
 
 
-    def decode_action(self, action):
+    def decode_action(self, action: int) -> Tuple[float, float]:
         """
         Decodes a combined action into back and lay offsets. The
         actions have been defined as an integer between 0 and 100
@@ -248,7 +248,7 @@ class SportsTradingEnvironment(gym.Env):
         return back_offset, lay_offset
 
 
-    def step(self, action):
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         """
         Executes one time step within the environment.
 
@@ -298,7 +298,7 @@ class SportsTradingEnvironment(gym.Env):
 
 
 
-    def reset(self, seed=None):
+    def reset(self, seed: Optional[int] = None) -> Tuple[np.ndarray, Dict]:
         """
         Resets the environment to its initial state.
 
@@ -340,7 +340,7 @@ class SportsTradingEnvironment(gym.Env):
                          self.volatility_indicator], dtype=np.float32), {}
 
 
-    def render(self, mode='human'):
+    def render(self, mode: str = 'human') -> None:
         """
         Renders the current state of the environment.
 

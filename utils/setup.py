@@ -10,9 +10,10 @@ import dotenv
 import numpy as np
 import tensorflow as tf
 import torch
+from typing import Dict
 
 
-def setup():
+def setup() -> str:
     """
     Main setup function. Calls every other setup function needed.
     Should be called at the beggining of each execution.
@@ -25,7 +26,7 @@ def setup():
     return data_directory
 
 
-def set_random_seeds():
+def set_random_seeds() -> None:
     """
     Sets the random seeds for reproducibility.
     """
@@ -37,7 +38,7 @@ def set_random_seeds():
     os.environ["PYTHONHASHSEED"] = str(SEED)
 
 
-def setup_training_hyperparameters():
+def setup_training_hyperparameters() -> Dict:
     """
     Defines and returns the specified hyperparamters for the agent's training.
 

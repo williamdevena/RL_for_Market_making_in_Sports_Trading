@@ -4,10 +4,10 @@ from testing import testing
 from utils import setup
 
 
-def test_all_combinations(model_name,
-                          num_simulations_per_combination,
-                          mode,
-                          plot_path):
+def test_all_combinations(model_name: str,
+                          num_simulations_per_combination: int,
+                          mode: str,
+                          plot_path: str) -> None:
     """
     Runs simulations on all possible combinations of environment parameters using a trained RL
     agent and save plots of the distributions of various risk and performance metrics.

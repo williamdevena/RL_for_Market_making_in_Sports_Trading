@@ -4,10 +4,10 @@ from testing import testing
 from utils import setup
 
 
-def test_correlations_state_actions(model_name,
-                                    mode,
-                                    num_simul_per_comb,
-                                    plot_path):
+def test_correlations_state_actions(model_name: str,
+                                    mode: str,
+                                    num_simul_per_comb: int,
+                                    plot_path: str) -> None:
     """
     This module runs simulations on all possible combinations of environment parameters with a given trained RL
     agent, and calculates and saves plots of the mean correlation matrix between state variables and actions.

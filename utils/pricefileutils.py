@@ -8,14 +8,15 @@ It also contains additional functions useful to extract information from the pri
 import betfairutil
 from betfairlightweight.resources.bettingresources import (MarketBook,
                                                            RunnerBook)
+from typing import List, Dict
 
 
 def get_runner_book_from_market_book(
-    market_book,
-    selection_id=None,
-    runner_name=None,
+    market_book: List[Dict],
+    selection_id: int = None,
+    runner_name: str = None,
     #handicap=0.0,
-    return_type=None,
+    return_type = None,
 ):
     """
     Extract a runner book from the given market book. The runner can be identified either by ID or name
@@ -62,7 +63,8 @@ def get_runner_book_from_market_book(
 
 
 def get_idx_first_inplay_mb_from_prices_file(
-    path_to_prices_file, filter_suspended = True):
+    path_to_prices_file: str,
+    filter_suspended: bool = True) -> int:
     """
     Search a prices file for the last market book before the market turned in play
     and returns the index of this last pre-event market book.
@@ -79,7 +81,7 @@ def get_idx_first_inplay_mb_from_prices_file(
         #     pre_event_market_book = market_book
 
 
-def get_last_traded_prices_from_runner(runner_book):
+def get_last_traded_prices_from_runner(runner_book: Dict) -> float:
     last_price = runner_book.get('lastPriceTraded', 0)
 
     if last_price!=None:
@@ -88,19 +90,19 @@ def get_last_traded_prices_from_runner(runner_book):
         return 0
 
 
-def get_name_match(price_file):
+def get_name_match(price_file) -> str:
     market_books = betfairutil.read_prices_file(price_file)
 
     return market_books[0]['marketDefinition']['eventName']
 
 
-def get_event_id(price_file):
+def get_event_id(price_file) -> int:
     market_books = betfairutil.read_prices_file(price_file)
 
     return market_books[0]['marketDefinition']['eventId']
 
 
-def get_event_date(price_file):
+def get_event_date(price_file) -> str:
     market_books = betfairutil.read_prices_file(price_file)
 
     return market_books[0]['marketDefinition']['openDate']

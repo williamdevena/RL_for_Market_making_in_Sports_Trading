@@ -1,6 +1,7 @@
 import numpy as np
 from tennisim import match
 from tennisim.sim import sim_game, sim_match, sim_set
+from typing import List, Tuple
 
 
 class TennisMarkovSimulator():
@@ -15,11 +16,11 @@ class TennisMarkovSimulator():
          simulate(): Simulates a tennis match and returns the match probabilities and odds time series.
     """
 
-    def __init__(self, a_s, b_s):
+    def __init__(self, a_s: float, b_s: float) -> None:
         self.a_s = a_s
         self.b_s = b_s
 
-    def simulate(self):
+    def simulate(self) -> tuple[List[float], List[float]]:
         """
         Simulates a tennis match and returns the match probabilities and odds time series.
 

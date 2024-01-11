@@ -10,9 +10,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from typing import List, Dict
 
 
-def plot_correlation_matrix_state_actions(corr_matrix, plot_path, list_feature_names):
+def plot_correlation_matrix_state_actions(corr_matrix: np.ndarray,
+                                          plot_path: str,
+                                          list_feature_names: List[str]) -> None:
+    """
+    Plots a correlation matrix for state and action features.
+
+    Args:
+        corr_matrix (np.ndarray): Correlation matrix to plot.
+        plot_path (str): Path where the plot will be saved.
+        list_feature_names (List[str]): List of feature names for the matrix.
+    """
     corr_matrix = corr_matrix[5:]
     mask = copy.deepcopy(corr_matrix)
     for i in range(len(mask)):
@@ -33,7 +44,17 @@ def plot_correlation_matrix_state_actions(corr_matrix, plot_path, list_feature_n
 
 
 
-def plot_results_of_all_strategies_test(results_path, strategies_names_list, metrics_list):
+def plot_results_of_all_strategies_test(results_path: str,
+                                        strategies_names_list: List[str],
+                                        metrics_list: List[str]) -> None:
+    """
+    Plots the results of all strategies for the test set.
+
+    Args:
+        results_path (str): Path where the results are stored.
+        strategies_names_list (List[str]): List of strategy names.
+        metrics_list (List[str]): List of metrics to plot.
+    """
     # Define the custom xlim and ylim for each metric.
     xlim_values = {
         'final_pnl': (-35, 35),
@@ -86,7 +107,15 @@ def plot_results_of_all_strategies_test(results_path, strategies_names_list, met
 
 
 
-def plot_results_of_single_strategy_test(plot_path, dict_results):
+def plot_results_of_single_strategy_test(plot_path: str,
+                                         dict_results: Dict[str, np.ndarray]) -> None:
+    """
+    Plots the results of a single strategy for the test set.
+
+    Args:
+        plot_path (str): Path where the plots will be saved.
+        dict_results (Dict[str, np.ndarray]): Dictionary containing result arrays for various metrics.
+    """
     if not os.path.exists(plot_path):
         os.makedirs(plot_path)
 

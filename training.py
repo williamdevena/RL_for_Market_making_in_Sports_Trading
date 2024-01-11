@@ -14,7 +14,12 @@ from environments.gym_env.tensorboardCallback import TensorboardCallback
 from utils import setup
 
 
-def training(model_name, saving_model, debug, saving_dir, saving_name, log_dir):
+def training(model_name: str,
+             saving_model: bool,
+             debug: bool,
+             saving_dir: str,
+             saving_name: str,
+             log_dir: str) -> None:
     """
     Train a given RL model using specified hyperparameters and environment.
 
