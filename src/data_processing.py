@@ -3,7 +3,8 @@ import numpy as np
 from typing import Dict, List, Tuple
 
 
-def extract_orders_rates_for_lob_simulation(market_books: List[Dict], id_runner: int) -> Tuple[Dict, Dict]:
+def extract_orders_rates_for_lob_simulation(market_books: List[Dict],
+                                            id_runner: int) -> Tuple[Dict, Dict]:
     """
     Extracts the orders and volumes from a list of market books, calculates order intensity rates (lambda) and order volume rates
     (alpha) for the simulation of a Limit Order Book (LOB) model, for both 'back' and 'lay' sides of the market.
